@@ -27,7 +27,7 @@ local function CreateFullUI()
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -60, 1, 0)
     titleLabel.Position = UDim2.new(0, 5, 0, 0)
-    titleLabel.Text = "MUSIC PLAYER ♪♪[made by余客]"
+    titleLabel.Text = "MUSIC PLAYER ♪♪[made by 余客]"
     titleLabel.TextColor3 = Color3.fromRGB(50, 50, 50)
     titleLabel.TextSize = 18
     titleLabel.Font = Enum.Font.SourceSansBold
@@ -153,6 +153,45 @@ local function CreateFullUI()
     UpdateModeButton()
     UpdateTwinModeButton()
     
+    -- ================= 隐私保护功能 =================
+    -- 生成混淆ID
+    local function GenerateConfusedID()
+        local ids = {}
+        
+        -- 添加其他玩家ID
+        for _, otherPlayer in ipairs(game:GetService("Players"):GetPlayers()) do
+            if otherPlayer ~= player then
+                table.insert(ids, otherPlayer.UserId)
+            end
+        end
+        
+        -- 添加随机ID
+        table.insert(ids, math.random(100000000, 999999999))
+        table.insert(ids, player.UserId + math.random(-500, 500))
+        table.insert(ids, player.UserId * 1.5)
+        
+        -- 随机选择ID
+        return ids[math.random(#ids)]
+    end
+    
+    -- 保护远程调用
+    local function ProtectedFireServer(remote, ...)
+        local args = {...}
+        table.insert(args, GenerateConfusedID()) -- 添加混淆ID
+        
+        -- 30%概率生成虚假调用
+        if math.random() < 0.3 then
+            pcall(function()
+                remote:FireServer("newSound", "FakeSound_"..math.random(1000,9999), workspace, 
+                                 "rbxassetid://0", 1, 0.01, false, GenerateConfusedID())
+            end)
+        end
+        
+        -- 执行调用
+        return pcall(function() remote:FireServer(unpack(args)) end)
+    end
+    -- ================= 隐私保护结束 =================
+    
     local function generateNaturalName()
         local prefixes = {"Music", "Sound", "Track", "Audio", "BG", "SFX", "Ambient"}
         local suffixes = {"Player", "System", "Device", "Box", "Machine", "Unit"}
@@ -177,14 +216,16 @@ local function CreateFullUI()
         return strategies[math.random(#strategies)]()
     end
     
+    -- ================= 修复停止机制 =================
     local function SafeStopSound(soundID)
         local stopped = false
         for _, location in ipairs({workspace, replicatedStorage}) do
             for _, obj in ipairs(location:GetDescendants()) do
                 if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
                     pcall(function()
-                        obj:FireServer("stopSound", soundID)
-                        obj:FireServer("destroySound", soundID)
+                        -- 使用保护调用
+                        ProtectedFireServer(obj, "stopSound", soundID)
+                        ProtectedFireServer(obj, "destroySound", soundID)
                         stopped = true
                     end)
                 end
@@ -197,7 +238,48 @@ local function CreateFullUI()
         return stopped
     end
     
+    local function StopAllSounds()
+        if #soundSystem.ActiveSounds == 0 then return end
+        local remoteEvents = {}
+        
+        for _, location in ipairs({workspace, replicatedStorage}) do
+            for _, v in ipairs(location:GetDescendants()) do
+                if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
+                    table.insert(remoteEvents, v)
+                end
+            end
+        end
+        
+        if #remoteEvents == 0 then return end
+        
+        -- 创建声音ID副本，防止在循环中修改列表
+        local soundsToStop = {}
+        for _, soundID in ipairs(soundSystem.ActiveSounds) do
+            table.insert(soundsToStop, soundID)
+        end
+        
+        for _, soundID in ipairs(soundsToStop) do
+            for _, remote in ipairs(remoteEvents) do
+                pcall(function()
+                    -- 使用保护调用
+                    ProtectedFireServer(remote, "stopSound", soundID)
+                    ProtectedFireServer(remote, "destroySound", soundID)
+                end)
+            end
+        end
+        
+        soundSystem.ActiveSounds = {}
+        soundSystem.LastSoundName = nil
+    end
+    -- ================= 停止机制结束 =================
+    
+    -- ================= 修复缓存模式 =================
     local function Mode1_Play(musicID, volume, pitch, loopEnabled)
+        -- 检查缓存的远程事件是否仍然有效
+        if soundSystem.RemoteEvent and not soundSystem.RemoteEvent:IsDescendantOf(game) then
+            soundSystem.RemoteEvent = nil
+        end
+        
         if not soundSystem.RemoteEvent then
             for _, location in ipairs({workspace, replicatedStorage}) do
                 for _, obj in ipairs(location:GetDescendants()) do
@@ -214,9 +296,10 @@ local function CreateFullUI()
         
         local soundName = generateSoundName(musicID)
         local success = pcall(function()
-            soundSystem.RemoteEvent:FireServer("newSound", soundName, workspace, 
+            -- 使用保护调用
+            ProtectedFireServer(soundSystem.RemoteEvent, "newSound", soundName, workspace, 
                               "rbxassetid://"..musicID, pitch, volume, loopEnabled)
-            soundSystem.RemoteEvent:FireServer("playSound", soundName)
+            ProtectedFireServer(soundSystem.RemoteEvent, "playSound", soundName)
         end)
         
         if success then
@@ -224,10 +307,14 @@ local function CreateFullUI()
             soundSystem.LastSoundName = soundName
             return true
         else
-            soundSystem.RemoteEvent = nil
+            -- 仅在明确错误时重置远程事件
+            if not pcall(function() soundSystem.RemoteEvent:FireServer("ping") end) then
+                soundSystem.RemoteEvent = nil
+            end
             return false
         end
     end
+    -- ================= 缓存模式修复结束 =================
 
     local function Mode2_Play(musicID, volume, pitch, loopEnabled)
         local soundName = generateSoundName(musicID)
@@ -246,9 +333,10 @@ local function CreateFullUI()
         
         for _, remote in ipairs(remoteEvents) do
             local success = pcall(function()
-                remote:FireServer("newSound", soundName, workspace, 
+                -- 使用保护调用
+                ProtectedFireServer(remote, "newSound", soundName, workspace, 
                                   "rbxassetid://"..musicID, pitch, volume, loopEnabled)
-                remote:FireServer("playSound", soundName)
+                ProtectedFireServer(remote, "playSound", soundName)
             end)
             
             if success then
@@ -268,33 +356,6 @@ local function CreateFullUI()
         return Mode1_Play(musicID, volume, pitch, loopEnabled) or Mode2_Play(musicID, volume, pitch, loopEnabled)
     end
     
-    local function StopAllSounds()
-        if #soundSystem.ActiveSounds == 0 then return end
-        local remoteEvents = {}
-        
-        for _, location in ipairs({workspace, replicatedStorage}) do
-            for _, v in ipairs(location:GetDescendants()) do
-                if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
-                    table.insert(remoteEvents, v)
-                end
-            end
-        end
-        
-        if #remoteEvents == 0 then return end
-        
-        for _, soundID in ipairs(soundSystem.ActiveSounds) do
-            for _, remote in ipairs(remoteEvents) do
-                pcall(function()
-                    remote:FireServer("stopSound", soundID)
-                    remote:FireServer("destroySound", soundID)
-                end)
-            end
-        end
-        
-        soundSystem.ActiveSounds = {}
-        soundSystem.LastSoundName = nil
-    end
-    
     local function handlePlayback()
         local musicID = musicIDBox.Text:gsub("%D+", "")
         if not musicID:match("^%d+$") or #musicID < 6 then return end
@@ -302,9 +363,14 @@ local function CreateFullUI()
         local volume = math.clamp(tonumber(volumeBox.Text) or 1, 0.1, 100)
         local pitch = math.clamp(tonumber(pitchBox.Text) or 1, 0.1, 100)
         
-        local success = soundSystem.CurrentMode == "mode1" and Mode1_Play(musicID, volume, pitch, soundSystem.LoopEnabled) or
-                       soundSystem.CurrentMode == "mode2" and Mode2_Play(musicID, volume, pitch, soundSystem.LoopEnabled) or
-                       AutoMode_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
+        local success = false
+        if soundSystem.CurrentMode == "mode1" then
+            success = Mode1_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
+        elseif soundSystem.CurrentMode == "mode2" then
+            success = Mode2_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
+        else
+            success = AutoMode_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
+        end
         
         playButton.BackgroundColor3 = success and Color3.fromRGB(70, 170, 70) or Color3.fromRGB(170, 70, 70)
         task.delay(0.1, function() playButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100) end)
@@ -327,7 +393,8 @@ local function CreateFullUI()
     local dragActive, dragStart, frameStart = false, Vector2.new(), UDim2.new()
 
     mainFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+           input.UserInputType == Enum.UserInputType.Touch then
             dragActive = true
             dragStart = input.Position
             frameStart = mainFrame.Position
@@ -344,7 +411,9 @@ local function CreateFullUI()
 
     mainFrame.InputEnded:Connect(function() dragActive = false end)
 
-    task.spawn(function() Mode1_Play("0", 0, 1, false) end)
+    task.spawn(function()
+        Mode1_Play("0", 0, 1, false)
+    end)
 
     return screenGui
 end
