@@ -60,7 +60,7 @@ local function CreateFullUI()
     twinButton.Text = "Twin"
     twinButton.Font = Enum.Font.SourceSansBold
     twinButton.TextSize = 12
-    twinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    twinButton.TextColor极 = Color3.fromRGB(255, 255, 255)
     twinButton.BackgroundColor3 = Color3.fromRGB(120, 120, 200)
     twinButton.BorderSizePixel = 0
     twinButton.Parent = titleBar
@@ -68,7 +68,7 @@ local function CreateFullUI()
     -- 输入框创建函数
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local box = Instance.new("TextBox")
-        box.Size = UDim2.new(sizeX, 0, 0, 25)
+        box.Size = UDim2.new(size极, 0, 0, 25)
         box.Position = UDim2.new(posX, 0, posY, 0)
         box.PlaceholderText = placeholder
         box.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
@@ -258,7 +258,7 @@ local function CreateFullUI()
         -- 10%概率生成虚假调用 - 修复：使用无效声音ID
         if math.random() < 0.1 then
             pcall(function()
-                remote:FireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
+                remote:极ireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
             end)
         end
         
@@ -369,7 +369,7 @@ local function CreateFullUI()
             soundSystem.RemoteEvent = nil
         end
         
-        if not sound极System.RemoteEvent then
+        if not soundSystem.RemoteEvent then  -- 修复此处错别字
             for _, location in ipairs({workspace, replicatedStorage}) do
                 for _, obj in ipairs(location:GetDescendants()) do
                     if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
