@@ -5,9 +5,8 @@ local runService = game:GetService("RunService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
--- 全局混淆参数（所有玩家共享）
+-- 全局混淆参数
 local GLOBAL_CONFUSION_ID = math.random(100000000, 999999999)
-local GLOBAL_CONFUSION_NAME = "User_"..math.random(10000,99999)
 
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
@@ -65,10 +64,10 @@ local function CreateFullUI()
     twinButton.BorderSizePixel = 0
     twinButton.Parent = titleBar
 
-    -- 输入框创建函数
+    -- 修复的输入框创建函数
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local box = Instance.new("TextBox")
-        box.Size = UDim2.new(size, 0, 0, 25)
+        box.Size = UDim2.new(sizeX, 0, 0, 25)
         box.Position = UDim2.new(posX, 0, posY, 0)
         box.PlaceholderText = placeholder
         box.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
@@ -83,7 +82,6 @@ local function CreateFullUI()
     local volumeBox = CreateInputBox(0.4, "[Volume] (0.1-100)", 0.4, 0.05)
     local pitchBox = CreateInputBox(0.4, "[Pitch] (0.1-100)", 0.4, 0.55)
 
-    -- 按钮创建函数
     local function CreateButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 30)
@@ -100,7 +98,6 @@ local function CreateFullUI()
     local playButton = CreateButton("Play", 0.05, 0.65, 0.4, Color3.fromRGB(100, 100, 100))
     local stopButton = CreateButton("Stop", 0.55, 0.65, 0.4, Color3.fromRGB(150, 50, 50))
 
-    -- 切换按钮创建函数
     local function CreateToggleButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 25)
@@ -158,13 +155,10 @@ local function CreateFullUI()
     UpdateModeButton()
     UpdateTwinModeButton()
     
-    -- ================= 修复的隐私保护功能 =================
-    -- 生成混淆ID（多层混淆）
     local function GenerateConfusedID()
         local ids = {}
         local allPlayers = game:GetService("Players"):GetPlayers()
         
-        -- 添加其他玩家ID（随机选择3-5个）
         for i = 1, math.random(3,5) do
             if #allPlayers > 1 then
                 local randomPlayer = allPlayers[math.random(1, #allPlayers)]
@@ -174,44 +168,32 @@ local function CreateFullUI()
             end
         end
         
-        -- 添加多种格式的随机ID
         table.insert(ids, math.random(100000000, 999999999))
         table.insert(ids, player.UserId + math.random(-500, 500))
         table.insert(ids, player.UserId * math.random(1.2, 1.8))
         table.insert(ids, math.random(1000000000, 9999999999))
         table.insert(ids, "ID_"..math.random(1000000, 9999999))
         table.insert(ids, "Player_"..math.random(10000,99999))
-        
-        -- 添加无效ID
         table.insert(ids, "INVALID_ID")
         table.insert(ids, "0")
         table.insert(ids, "nil")
         table.insert(ids, "unknown")
-        
-        -- 添加全局混淆ID
         table.insert(ids, GLOBAL_CONFUSION_ID)
         
-        -- 随机选择ID
         return ids[math.random(#ids)]
     end
     
-    -- 生成虚假玩家名（增强版）
     local function GenerateFakeUsername()
         local prefixes = {"Player", "User", "Guest", "Roblox", "Game", "Sound", "Music", "Audio"}
         local suffixes = {"123", "456", "789", "X", "Pro", "Master", "Lover", "Fan", "King", "Queen"}
         return prefixes[math.random(#prefixes)]..suffixes[math.random(#suffixes)]..math.random(100,999)
     end
     
-    -- 保护远程调用（修复版） - 确保虚假调用不会播放真实声音
     local function ProtectedFireServer(remote, ...)
         local args = {...}
-        
-        -- 添加混淆ID（在末尾）
         table.insert(args, GenerateConfusedID())
-        -- 添加虚假用户名（在末尾）
         table.insert(args, GenerateFakeUsername())
         
-        -- 添加额外混淆参数（在末尾）
         if math.random() < 0.7 then
             table.insert(args, math.random())
         end
@@ -219,14 +201,12 @@ local function CreateFullUI()
             table.insert(args, "param_"..math.random(1000,9999))
         end
         
-        -- 30%概率生成虚假调用 - 修复：使用无效音乐ID
         if math.random() < 0.3 then
             pcall(function()
-                -- 随机选择虚假事件类型
                 local fakeEvents = {
                     function() 
                         remote:FireServer("newSound", "FakeSound_"..math.random(1000,9999), workspace, 
-                                         "rbxassetid://0", 0, 0, false, GenerateConfusedID()) -- 音量设为0
+                                        "rbxassetid://0", 0, 0, false, GenerateConfusedID())
                     end,
                     function()
                         remote:FireServer("playSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
@@ -235,44 +215,34 @@ local function CreateFullUI()
                         remote:FireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
                     end,
                     function()
-                        remote:FireServer("updateSound", "FakeSound_"..math.random(1000,9999), 0, 0, GenerateConfusedID()) -- 音量和音调设为0
+                        remote:FireServer("updateSound", "FakeSound_"..math.random(1000,9999), 0, 0, GenerateConfusedID())
                     end
                 }
-                
-                -- 执行虚假调用
                 fakeEvents[math.random(#fakeEvents)]()
             end)
         end
         
-        -- 执行调用
         return pcall(function() remote:FireServer(unpack(args)) end)
     end
     
-    -- 为停止功能创建专用保护调用（参数更少）
     local function ProtectedFireServerForStop(remote, command, soundID)
         local args = {command, soundID}
-        
-        -- 添加混淆ID
         table.insert(args, GenerateConfusedID())
         
-        -- 10%概率生成虚假调用 - 修复：使用无效声音ID
         if math.random() < 0.1 then
             pcall(function()
-                remote:ireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
+                remote:FireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
             end)
         end
         
-        -- 执行调用
         return pcall(function() remote:FireServer(unpack(args)) end)
     end
     
-    -- 时间混淆系统
     local function TimeConfusedCall(callback)
-        local delay = math.random(5, 30)/100 -- 0.05-0.3秒
+        local delay = math.random(5, 30)/100
         runService.Heartbeat:Wait()
         task.delay(delay, callback)
     end
-    -- ================= 隐私保护结束 =================
     
     local function generateNaturalName()
         local prefixes = {"Music", "Sound", "Track", "Audio", "BG", "SFX", "Ambient"}
@@ -298,7 +268,6 @@ local function CreateFullUI()
         return strategies[math.random(#strategies)]()
     end
     
-    -- ================= 修复停止机制 =================
     local function SafeStopSound(soundID)
         local stopped = false
         for _, location in ipairs({workspace, replicatedStorage}) do
@@ -306,7 +275,6 @@ local function CreateFullUI()
                 if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
                     TimeConfusedCall(function()
                         pcall(function()
-                            -- 使用专用停止保护调用
                             ProtectedFireServerForStop(obj, "stopSound", soundID)
                             ProtectedFireServerForStop(obj, "destroySound", soundID)
                             stopped = true
@@ -338,7 +306,6 @@ local function CreateFullUI()
             
             if #remoteEvents == 0 then return end
             
-            -- 创建声音ID副本
             local soundsToStop = {}
             for _, soundID in ipairs(soundSystem.ActiveSounds) do
                 table.insert(soundsToStop, soundID)
@@ -348,7 +315,6 @@ local function CreateFullUI()
                 for _, remote in ipairs(remoteEvents) do
                     TimeConfusedCall(function()
                         pcall(function()
-                            -- 使用专用停止保护调用
                             ProtectedFireServerForStop(remote, "stopSound", soundID)
                             ProtectedFireServerForStop(remote, "destroySound", soundID)
                         end)
@@ -360,16 +326,13 @@ local function CreateFullUI()
             soundSystem.LastSoundName = nil
         end)
     end
-    -- ================= 停止机制结束 =================
     
-    -- ================= 修复缓存模式 =================
     local function Mode1_Play(musicID, volume, pitch, loopEnabled)
-        -- 检查缓存的远程事件是否仍然有效
         if soundSystem.RemoteEvent and not soundSystem.RemoteEvent:IsDescendantOf(game) then
             soundSystem.RemoteEvent = nil
         end
         
-        if not soundSystem.RemoteEvent then  -- 修复此处错别字
+        if not soundSystem.RemoteEvent then
             for _, location in ipairs({workspace, replicatedStorage}) do
                 for _, obj in ipairs(location:GetDescendants()) do
                     if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
@@ -388,9 +351,8 @@ local function CreateFullUI()
         
         local function PlaySound()
             success = pcall(function()
-                -- 使用保护调用
                 ProtectedFireServer(soundSystem.RemoteEvent, "newSound", soundName, workspace, 
-                                  "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+                                 "rbxassetid://"..musicID, pitch, volume, loopEnabled)
                 ProtectedFireServer(soundSystem.RemoteEvent, "playSound", soundName)
             end)
         end
@@ -402,14 +364,12 @@ local function CreateFullUI()
             soundSystem.LastSoundName = soundName
             return true
         else
-            -- 仅在明确错误时重置远程事件
             if not pcall(function() soundSystem.RemoteEvent:FireServer("ping") end) then
                 soundSystem.RemoteEvent = nil
             end
             return false
         end
     end
-    -- ================= 缓存模式修复结束 =================
 
     local function Mode2_Play(musicID, volume, pitch, loopEnabled)
         local soundName = generateSoundName(musicID)
@@ -430,9 +390,8 @@ local function CreateFullUI()
             
             for _, remote in ipairs(remoteEvents) do
                 local success = pcall(function()
-                    -- 使用保护调用
                     ProtectedFireServer(remote, "newSound", soundName, workspace, 
-                                      "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+                                     "rbxassetid://"..musicID, pitch, volume, loopEnabled)
                     ProtectedFireServer(remote, "playSound", soundName)
                 end)
                 
