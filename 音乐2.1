@@ -1,12 +1,8 @@
 local player = game:GetService("Players").LocalPlayer
 local userInput = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local runService = game:GetService("RunService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
-
--- 全局混淆参数
-local GLOBAL_CONFUSION_ID = math.random(100000000, 999999999)
 
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
@@ -15,7 +11,6 @@ local function CreateFullUI()
     screenGui.DisplayOrder = 999
     screenGui.Parent = player.PlayerGui
 
-    -- 主框架
     local mainFrame = Instance.new("Frame")
     mainFrame.Size = UDim2.new(0, 300, 0, 200)
     mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
@@ -24,7 +19,6 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
 
-    -- 标题栏
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
@@ -41,7 +35,6 @@ local function CreateFullUI()
     titleLabel.BackgroundTransparency = 1
     titleLabel.Parent = titleBar
 
-    -- 关闭按钮
     local closeButton = Instance.new("TextButton")
     closeButton.Size = UDim2.new(0, 25, 0, 25)
     closeButton.Position = UDim2.new(1, -30, 0.5, -12.5)
@@ -55,7 +48,6 @@ local function CreateFullUI()
     closeButton.Parent = titleBar
     closeButton.MouseButton1Click:Connect(function() screenGui:Destroy() end)
 
-    -- Twin按钮
     local twinButton = Instance.new("TextButton")
     twinButton.Size = UDim2.new(0, 25, 0, 25)
     twinButton.Position = UDim2.new(1, -65, 0.5, -12.5)
@@ -68,87 +60,60 @@ local function CreateFullUI()
     twinButton.BorderSizePixel = 0
     twinButton.Parent = titleBar
 
-    -- === UI布局 ===
-    local CONTROL_HEIGHT = 25
+    -- 输入框创建函数
+    local function CreateInputBox(posY, placeholder, sizeX, posX)
+        local box = Instance.new("TextBox")
+        box.Size = UDim2.new(sizeX, 0, 0, 25)
+        box.Position = UDim2.new(posX, 0, posY, 0)
+        box.PlaceholderText = placeholder
+        box.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+        box.TextColor3 = Color3.fromRGB(0, 0, 0)
+        box.Font = Enum.Font.SourceSans
+        box.TextSize = 14
+        box.Parent = mainFrame
+        return box
+    end
 
-    -- 音乐ID输入框
-    local musicIDBox = Instance.new("TextBox")
-    musicIDBox.Size = UDim2.new(0.9, 0, 0, CONTROL_HEIGHT)
-    musicIDBox.Position = UDim2.new(0.05, 0, 0.2, 0)
-    musicIDBox.PlaceholderText = "[Music ID]"
-    musicIDBox.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
-    musicIDBox.TextColor3 = Color3.fromRGB(0, 0, 0)
-    musicIDBox.Font = Enum.Font.SourceSans
-    musicIDBox.TextSize = 14
-    musicIDBox.Parent = mainFrame
+    local musicIDBox = CreateInputBox(0.2, "[Music ID]", 0.9, 0.05)
+    local volumeBox = CreateInputBox(0.4, "[Volume] (0.1-100)", 0.4, 0.05)
+    local pitchBox = CreateInputBox(0.4, "[Pitch] (0.1-100)", 0.4, 0.55)
 
-    -- 音量输入框
-    local volumeBox = Instance.new("TextBox")
-    volumeBox.Size = UDim2.new(0.4, 0, 0, CONTROL_HEIGHT)
-    volumeBox.Position = UDim2.new(0.05, 0, 0.4, 0)
-    volumeBox.PlaceholderText = "[Volume] (0.1-100)"
-    volumeBox.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
-    volumeBox.TextColor3 = Color3.fromRGB(0, 0, 0)
-    volumeBox.Font = Enum.Font.SourceSans
-    volumeBox.TextSize = 14
-    volumeBox.Parent = mainFrame
+    -- 按钮创建函数
+    local function CreateButton(text, posX, posY, sizeX, color)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(sizeX, 0, 0, 30)
+        btn.Position = UDim2.new(posX, 0, posY, 0)
+        btn.Text = text
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextSize = 14
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.BackgroundColor3 = color
+        btn.Parent = mainFrame
+        return btn
+    end
 
-    -- 音调输入框
-    local pitchBox = Instance.new("TextBox")
-    pitchBox.Size = UDim2.new(0.4, 0, 0, CONTROL_HEIGHT)
-    pitchBox.Position = UDim2.new(0.55, 0, 0.4, 0)
-    pitchBox.PlaceholderText = "[Pitch] (0.1-100)"
-    pitchBox.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
-    pitchBox.TextColor3 = Color3.fromRGB(0, 0, 0)
-    pitchBox.Font = Enum.Font.SourceSans
-    pitchBox.TextSize = 14
-    pitchBox.Parent = mainFrame
+    local playButton = CreateButton("Play", 0.05, 0.65, 0.4, Color3.fromRGB(100, 100, 100))
+    local stopButton = CreateButton("Stop", 0.55, 0.65, 0.4, Color3.fromRGB(150, 50, 50))
 
-    -- 播放按钮
-    local playButton = Instance.new("TextButton")
-    playButton.Size = UDim2.new(0.4, 0, 0, 30)
-    playButton.Position = UDim2.new(0.05, 0, 0.65, 0)
-    playButton.Text = "Play"
-    playButton.Font = Enum.Font.SourceSansBold
-    playButton.TextSize = 14
-    playButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    playButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    playButton.Parent = mainFrame
+    -- 切换按钮创建函数
+    local function CreateToggleButton(text, posX, posY, sizeX, color)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(sizeX, 0, 0, 25)
+        btn.Position = UDim2.new(posX, 0, posY, 0)
+        btn.Text = text
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextSize = 12
+        btn.BackgroundColor3 = color
+        btn.Parent = mainFrame
+        return btn
+    end
 
-    -- 停止按钮
-    local stopButton = Instance.new("TextButton")
-    stopButton.Size = UDim2.new(0.4, 0, 0, 30)
-    stopButton.Position = UDim2.new(0.55, 0, 0.65, 0)
-    stopButton.Text = "Stop"
-    stopButton.Font = Enum.Font.SourceSansBold
-    stopButton.TextSize = 14
-    stopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    stopButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-    stopButton.Parent = mainFrame
-
-    -- 循环开关
-    local loopToggle = Instance.new("TextButton")
-    loopToggle.Size = UDim2.new(0.4, 0, 0, 25)
-    loopToggle.Position = UDim2.new(0.55, 0, 0.85, 0)
-    loopToggle.Text = "Loop: ON"
-    loopToggle.Font = Enum.Font.SourceSansBold
-    loopToggle.TextSize = 12
+    local loopToggle = CreateToggleButton("Loop: ON", 0.55, 0.85, 0.4, Color3.new(0,0,0))
     loopToggle.BackgroundTransparency = 1
     loopToggle.TextColor3 = Color3.fromRGB(0, 200, 0)
-    loopToggle.Parent = mainFrame
 
-    -- 智能模式按钮
-    local modeButton = Instance.new("TextButton")
-    modeButton.Size = UDim2.new(0.4, 0, 0, 25)
-    modeButton.Position = UDim2.new(0.05, 0, 0.85, 0)
-    modeButton.Text = "智能模式"
-    modeButton.Font = Enum.Font.SourceSansBold
-    modeButton.TextSize = 12
-    modeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    modeButton.BackgroundColor3 = Color3.fromRGB(180, 180, 255)
-    modeButton.Parent = mainFrame
+    local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
 
-    -- === 功能系统 ===
     local soundSystem = {
         LoopEnabled = true,
         ActiveSounds = {},
@@ -188,113 +153,16 @@ local function CreateFullUI()
     UpdateModeButton()
     UpdateTwinModeButton()
     
-    -- 生成混淆ID
-    local function GenerateConfusedID()
-        local ids = {}
-        local allPlayers = game:GetService("Players"):GetPlayers()
-        
-        for i = 1, math.random(3,5) do
-            if #allPlayers > 1 then
-                local randomPlayer = allPlayers[math.random(1, #allPlayers)]
-                if randomPlayer ~= player then
-                    table.insert(ids, randomPlayer.UserId)
-                end
-            end
-        end
-        
-        table.insert(ids, math.random(100000000, 999999999))
-        table.insert(ids, player.UserId + math.random(-500, 500))
-        table.insert(ids, player.UserId * math.random(1.2, 1.8))
-        table.insert(ids, math.random(1000000000, 9999999999))
-        table.insert(ids, "ID_"..math.random(1000000, 9999999))
-        table.insert(ids, "Player_"..math.random(10000,99999))
-        table.insert(ids, "INVALID_ID")
-        table.insert(ids, "0")
-        table.insert(ids, "nil")
-        table.insert(ids, "unknown")
-        table.insert(ids, GLOBAL_CONFUSION_ID)
-        
-        return ids[math.random(#ids)]
-    end
-    
-    -- 生成虚假玩家名
-    local function GenerateFakeUsername()
-        local prefixes = {"Player", "User", "Guest", "Roblox", "Game", "Sound", "Music", "Audio"}
-        local suffixes = {"123", "456", "789", "X", "Pro", "Master", "Lover", "Fan", "King", "Queen"}
-        return prefixes[math.random(#prefixes)]..suffixes[math.random(#suffixes)]..math.random(100,999)
-    end
-    
-    -- 保护远程调用
-    local function ProtectedFireServer(remote, ...)
-        local args = {...}
-        table.insert(args, GenerateConfusedID())
-        table.insert(args, GenerateFakeUsername())
-        
-        if math.random() < 0.7 then
-            table.insert(args, math.random())
-        end
-        if math.random() < 0.5 then
-            table.insert(args, "param_"..math.random(1000,9999))
-        end
-        
-        if math.random() < 0.3 then
-            pcall(function()
-                local fakeEvents = {
-                    function() 
-                        remote:FireServer("newSound", "FakeSound_"..math.random(1000,9999), workspace, 
-                                        "rbxassetid://0", 0, 0, false, GenerateConfusedID())
-                    end,
-                    function()
-                        remote:FireServer("playSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
-                    end,
-                    function()
-                        remote:FireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
-                    end,
-                    function()
-                        remote:FireServer("updateSound", "FakeSound_"..math.random(1000,9999), 0, 0, GenerateConfusedID())
-                    end
-                }
-                fakeEvents[math.random(#fakeEvents)]()
-            end)
-        end
-        
-        return pcall(function() remote:FireServer(unpack(args)) end)
-    end
-    
-    -- 停止专用保护调用
-    local function ProtectedFireServerForStop(remote, command, soundID)
-        local args = {command, soundID}
-        table.insert(args, GenerateConfusedID())
-        
-        if math.random() < 0.1 then
-            pcall(function()
-                remote:FireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
-            end)
-        end
-        
-        return pcall(function() remote:FireServer(unpack(args)) end)
-    end
-    
-    -- 时间混淆系统
-    local function TimeConfusedCall(callback)
-        local delay = math.random(5, 30)/100
-        runService.Heartbeat:Wait()
-        task.delay(delay, callback)
-    end
-    
-    -- 生成自然名称
     local function generateNaturalName()
         local prefixes = {"Music", "Sound", "Track", "Audio", "BG", "SFX", "Ambient"}
         local suffixes = {"Player", "System", "Device", "Box", "Machine", "Unit"}
         return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..math.random(1000,9999)
     end
     
-    -- 生成音乐ID名称
     local function generateMusicIDName(musicID)
         return #musicID < 6 and "Audio_"..musicID or "Audio_"..musicID:sub(-6)
     end
     
-    -- 生成随机名称
     local function generateRandomName()
         local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         local name = ""
@@ -304,24 +172,20 @@ local function CreateFullUI()
         return name
     end
     
-    -- 生成声音名称
     local function generateSoundName(musicID)
         local strategies = {generateNaturalName, generateRandomName, function() return generateMusicIDName(musicID) end}
         return strategies[math.random(#strategies)]()
     end
     
-    -- 安全停止声音 (修复版)
+    -- ================= 修复停止机制 =================
     local function SafeStopSound(soundID)
         local stopped = false
         for _, location in ipairs({workspace, replicatedStorage}) do
             for _, obj in ipairs(location:GetDescendants()) do
                 if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
-                    TimeConfusedCall(function()
-                        pcall(function()
-                            -- 使用专用停止保护调用
-                            ProtectedFireServerForStop(obj, "stopSound", soundID)
-                            stopped = true
-                        end)
+                    pcall(function()
+                        obj:FireServer("stopSound", soundID)
+                        stopped = true
                     end)
                 end
             end
@@ -333,52 +197,40 @@ local function CreateFullUI()
         return stopped
     end
     
-    -- 停止所有声音 (修复版)
     local function StopAllSounds()
         if #soundSystem.ActiveSounds == 0 then return end
+        local remoteEvents = {}
         
-        TimeConfusedCall(function()
-            local remoteEvents = {}
-            
-            for _, location in ipairs({workspace, replicatedStorage}) do
-                for _, v in ipairs(location:GetDescendants()) do
-                    if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
-                        table.insert(remoteEvents, v)
-                    end
+        for _, location in ipairs({workspace, replicatedStorage}) do
+            for _, v in ipairs(location:GetDescendants()) do
+                if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
+                    table.insert(remoteEvents, v)
                 end
             end
-            
-            if #remoteEvents == 0 then return end
-            
-            -- 创建声音ID副本
-            local soundsToStop = {}
-            for _, soundID in ipairs(soundSystem.ActiveSounds) do
-                table.insert(soundsToStop, soundID)
-            end
-            
-            -- 只发送一次停止命令
-            for _, remote in ipairs(remoteEvents) do
-                TimeConfusedCall(function()
-                    pcall(function()
-                        -- 使用专用停止保护调用
-                        for _, soundID in ipairs(soundsToStop) do
-                            ProtectedFireServerForStop(remote, "stopSound", soundID)
-                        end
-                    end)
-                end)
-            end
-            
-            soundSystem.ActiveSounds = {}
-            soundSystem.LastSoundName = nil
-        end)
-    end
-    
-    -- 缓存模式播放
-    local function Mode1_Play(musicID, volume, pitch, loopEnabled)
-        if soundSystem.RemoteEvent and not soundSystem.RemoteEvent:IsDescendantOf(game) then
-            soundSystem.RemoteEvent = nil
         end
         
+        if #remoteEvents == 0 then return end
+        
+        -- 创建声音ID副本
+        local soundsToStop = {}
+        for _, soundID in ipairs(soundSystem.ActiveSounds) do
+            table.insert(soundsToStop, soundID)
+        end
+        
+        for _, soundID in ipairs(soundsToStop) do
+            for _, remote in ipairs(remoteEvents) do
+                pcall(function()
+                    remote:FireServer("stopSound", soundID)
+                end)
+            end
+        end
+        
+        soundSystem.ActiveSounds = {}
+        soundSystem.LastSoundName = nil
+    end
+    -- ================= 停止机制修复结束 =================
+    
+    local function Mode1_Play(musicID, volume, pitch, loopEnabled)
         if not soundSystem.RemoteEvent then
             for _, location in ipairs({workspace, replicatedStorage}) do
                 for _, obj in ipairs(location:GetDescendants()) do
@@ -394,63 +246,49 @@ local function CreateFullUI()
         if not soundSystem.RemoteEvent then return false end
         
         local soundName = generateSoundName(musicID)
-        local success = false
-        
-        local function PlaySound()
-            success = pcall(function()
-                ProtectedFireServer(soundSystem.RemoteEvent, "newSound", soundName, workspace, 
-                                 "rbxassetid://"..musicID, pitch, volume, loopEnabled)
-                ProtectedFireServer(soundSystem.RemoteEvent, "playSound", soundName)
-            end)
-        end
-        
-        TimeConfusedCall(PlaySound)
+        local success = pcall(function()
+            soundSystem.RemoteEvent:FireServer("newSound", soundName, workspace, 
+                              "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+            soundSystem.RemoteEvent:FireServer("playSound", soundName)
+        end)
         
         if success then
             table.insert(soundSystem.ActiveSounds, soundName)
             soundSystem.LastSoundName = soundName
             return true
         else
-            if not pcall(function() soundSystem.RemoteEvent:FireServer("ping") end) then
-                soundSystem.RemoteEvent = nil
-            end
+            soundSystem.RemoteEvent = nil
             return false
         end
     end
 
-    -- 遍历模式播放
     local function Mode2_Play(musicID, volume, pitch, loopEnabled)
         local soundName = generateSoundName(musicID)
         local playedSuccessfully = false
+        local remoteEvents = {}
         
-        local function PlaySound()
-            local remoteEvents = {}
-            
-            for _, location in ipairs({workspace, replicatedStorage}) do
-                for _, v in ipairs(location:GetDescendants()) do
-                    if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
-                        table.insert(remoteEvents, v)
-                    end
-                end
-            end
-            
-            if #remoteEvents == 0 then return false end
-            
-            for _, remote in ipairs(remoteEvents) do
-                local success = pcall(function()
-                    ProtectedFireServer(remote, "newSound", soundName, workspace, 
-                                     "rbxassetid://"..musicID, pitch, volume, loopEnabled)
-                    ProtectedFireServer(remote, "playSound", soundName)
-                end)
-                
-                if success then
-                    playedSuccessfully = true
-                    if not soundSystem.TwinMode then break end
+        for _, location in ipairs({workspace, replicatedStorage}) do
+            for _, v in ipairs(location:GetDescendants()) do
+                if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
+                    table.insert(remoteEvents, v)
                 end
             end
         end
         
-        TimeConfusedCall(PlaySound)
+        if #remoteEvents == 0 then return false end
+        
+        for _, remote in ipairs(remoteEvents) do
+            local success = pcall(function()
+                remote:FireServer("newSound", soundName, workspace, 
+                                  "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+                remote:FireServer("playSound", soundName)
+            end)
+            
+            if success then
+                playedSuccessfully = true
+                if not soundSystem.TwinMode then break end
+            end
+        end
         
         if playedSuccessfully then
             table.insert(soundSystem.ActiveSounds, soundName)
@@ -459,12 +297,10 @@ local function CreateFullUI()
         return playedSuccessfully
     end
     
-    -- 自动模式播放
     local function AutoMode_Play(musicID, volume, pitch, loopEnabled)
         return Mode1_Play(musicID, volume, pitch, loopEnabled) or Mode2_Play(musicID, volume, pitch, loopEnabled)
     end
     
-    -- 处理播放
     local function handlePlayback()
         local musicID = musicIDBox.Text:gsub("%D+", "")
         if not musicID:match("^%d+$") or #musicID < 6 then return end
@@ -472,27 +308,20 @@ local function CreateFullUI()
         local volume = math.clamp(tonumber(volumeBox.Text) or 1, 0.1, 100)
         local pitch = math.clamp(tonumber(pitchBox.Text) or 1, 0.1, 100)
         
-        local success = false
-        if soundSystem.CurrentMode == "mode1" then
-            success = Mode1_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
-        elseif soundSystem.CurrentMode == "mode2" then
-            success = Mode2_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
-        else
-            success = AutoMode_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
-        end
+        local success = soundSystem.CurrentMode == "mode1" and Mode1_Play(musicID, volume, pitch, soundSystem.LoopEnabled) or
+                       soundSystem.CurrentMode == "mode2" and Mode2_Play(musicID, volume, pitch, soundSystem.LoopEnabled) or
+                       AutoMode_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
         
         playButton.BackgroundColor3 = success and Color3.fromRGB(70, 170, 70) or Color3.fromRGB(170, 70, 70)
         task.delay(0.1, function() playButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100) end)
     end
 
-    -- 处理停止 (修复版)
     local function handleStop()
         StopAllSounds()
         stopButton.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
         task.delay(0.1, function() stopButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50) end)
     end
     
-    -- 连接按钮事件
     playButton.MouseButton1Click:Connect(handlePlayback)
     stopButton.MouseButton1Click:Connect(handleStop)
     loopToggle.MouseButton1Click:Connect(function()
@@ -501,12 +330,10 @@ local function CreateFullUI()
         loopToggle.TextColor3 = soundSystem.LoopEnabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
     end)
 
-    -- 拖动功能
     local dragActive, dragStart, frameStart = false, Vector2.new(), UDim2.new()
 
     mainFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or
-           input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragActive = true
             dragStart = input.Position
             frameStart = mainFrame.Position
@@ -523,10 +350,7 @@ local function CreateFullUI()
 
     mainFrame.InputEnded:Connect(function() dragActive = false end)
 
-    -- 初始化测试
-    task.spawn(function()
-        Mode1_Play("0", 0, 1, false)
-    end)
+    task.spawn(function() Mode1_Play("0", 0, 1, false) end)
 
     return screenGui
 end
