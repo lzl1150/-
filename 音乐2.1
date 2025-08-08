@@ -57,7 +57,7 @@ local function CreateFullUI()
     twinButton.Size = UDim2.new(0, 25, 0, 25)
     twinButton.Position = UDim2.new(1, -65, 0.5, -12.5)
     twinButton.AnchorPoint = Vector2.new(1, 0.5)
-    twinButton.Text = "Twin"
+    twinButton.Text = "双迸发"
     twinButton.Font = Enum.Font.SourceSansBold
     twinButton.TextSize = 12
     twinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -158,7 +158,7 @@ local function CreateFullUI()
     UpdateModeButton()
     UpdateTwinModeButton()
     
-    -- ================= 终极隐私保护功能 =================
+    -- ================= 修复的隐私保护功能 =================
     -- 生成混淆ID（多层混淆）
     local function GenerateConfusedID()
         local ids = {}
@@ -202,76 +202,16 @@ local function CreateFullUI()
         return prefixes[math.random(#prefixes)]..suffixes[math.random(#suffixes)]..math.random(100,999)
     end
     
-    -- 代理调用系统（核心隐私保护）
-    local function ProxyFireServer(targetRemote, ...)
-        local args = {...}
-        
-        -- 查找所有可用的远程事件作为代理
-        local proxyRemotes = {}
-        for _, location in ipairs({workspace, replicatedStorage}) do
-            for _, obj in ipairs(location:GetDescendants()) do
-                if obj:IsA("RemoteEvent") and obj ~= targetRemote then
-                    table.insert(proxyRemotes, obj)
-                end
-            end
-        end
-        
-        if #proxyRemotes == 0 then
-            -- 没有代理可用，直接调用
-            return pcall(function() targetRemote:FireServer(unpack(args)) end)
-        end
-        
-        -- 随机选择1-3个代理
-        local selectedProxies = {}
-        for i = 1, math.random(1,3) do
-            table.insert(selectedProxies, proxyRemotes[math.random(#proxyRemotes)])
-        end
-        
-        -- 创建代理调用链
-        local function CreateProxyChain(proxyIndex)
-            if proxyIndex > #selectedProxies then
-                -- 最终调用目标
-                return pcall(function() targetRemote:FireServer(unpack(args)) end)
-            end
-            
-            local proxy = selectedProxies[proxyIndex]
-            local proxyArgs = {
-                targetRemote,
-                unpack(args),
-                GenerateConfusedID(), -- 添加混淆ID
-                GenerateFakeUsername() -- 添加虚假用户名
-            }
-            
-            -- 随机添加额外参数
-            if math.random() < 0.6 then
-                table.insert(proxyArgs, math.random())
-            end
-            if math.random() < 0.4 then
-                table.insert(proxyArgs, "param_"..math.random(1000,9999))
-            end
-            
-            return pcall(function() 
-                proxy:FireServer("proxyCall", unpack(proxyArgs)) 
-            end)
-        end
-        
-        -- 执行代理链
-        return CreateProxyChain(1)
-    end
-    
-    -- 保护远程调用（终极版）
+    -- 保护远程调用（修复版）
     local function ProtectedFireServer(remote, ...)
         local args = {...}
         
-        -- 添加混淆ID（随机位置）
-        local insertPos = math.random(1, #args+1)
-        table.insert(args, insertPos, GenerateConfusedID())
+        -- 添加混淆ID（在末尾）
+        table.insert(args, GenerateConfusedID())
+        -- 添加虚假用户名（在末尾）
+        table.insert(args, GenerateFakeUsername())
         
-        -- 添加虚假用户名（随机位置）
-        insertPos = math.random(1, #args+1)
-        table.insert(args, insertPos, GenerateFakeUsername())
-        
-        -- 添加额外混淆参数
+        -- 添加额外混淆参数（在末尾）
         if math.random() < 0.7 then
             table.insert(args, math.random())
         end
@@ -279,13 +219,8 @@ local function CreateFullUI()
             table.insert(args, "param_"..math.random(1000,9999))
         end
         
-        -- 50%概率使用代理调用
-        if math.random() < 0.5 then
-            return ProxyFireServer(remote, unpack(args))
-        end
-        
-        -- 50%概率直接调用（但添加虚假调用）
-        if math.random() < 0.5 then
+        -- 30%概率生成虚假调用
+        if math.random() < 0.3 then
             pcall(function()
                 -- 随机选择虚假事件类型
                 local fakeEvents = {
@@ -435,7 +370,7 @@ local function CreateFullUI()
         
         TimeConfusedCall(function()
             success = pcall(function()
-                -- 使用保护调用
+                -- 使用保护调用（修复参数顺序）
                 ProtectedFireServer(soundSystem.RemoteEvent, "newSound", soundName, workspace, 
                                   "rbxassetid://"..musicID, pitch, volume, loopEnabled)
                 ProtectedFireServer(soundSystem.RemoteEvent, "playSound", soundName)
@@ -475,7 +410,7 @@ local function CreateFullUI()
             
             for _, remote in ipairs(remoteEvents) do
                 local success = pcall(function()
-                    -- 使用保护调用
+                    -- 使用保护调用（修复参数顺序）
                     ProtectedFireServer(remote, "newSound", soundName, workspace, 
                                       "rbxassetid://"..musicID, pitch, volume, loopEnabled)
                     ProtectedFireServer(remote, "playSound", soundName)
