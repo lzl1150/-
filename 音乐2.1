@@ -57,7 +57,7 @@ local function CreateFullUI()
     twinButton.Size = UDim2.new(0, 25, 0, 25)
     twinButton.Position = UDim2.new(1, -65, 0.5, -12.5)
     twinButton.AnchorPoint = Vector2.new(1, 0.5)
-    twinButton.Text = "双迸发"
+    twinButton.Text = "Twin"
     twinButton.Font = Enum.Font.SourceSansBold
     twinButton.TextSize = 12
     twinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -277,7 +277,7 @@ local function CreateFullUI()
     local function generateNaturalName()
         local prefixes = {"Music", "Sound", "Track", "Audio", "BG", "SFX", "Ambient"}
         local suffixes = {"Player", "System", "Device", "Box", "Machine", "Unit"}
-        return prefixes[极math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..math.random(1000,9999)
+        return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..math.random(1000,9999)
     end
     
     local function generateMusicIDName(musicID)
@@ -386,14 +386,16 @@ local function CreateFullUI()
         local soundName = generateSoundName(musicID)
         local success = false
         
-        TimeConfusedCall(function()
+        local function PlaySound()
             success = pcall(function()
                 -- 使用保护调用
                 ProtectedFireServer(soundSystem.RemoteEvent, "newSound", soundName, workspace, 
                                   "rbxassetid://"..musicID, pitch, volume, loopEnabled)
                 ProtectedFireServer(soundSystem.RemoteEvent, "playSound", soundName)
             end)
-        end)
+        end
+        
+        TimeConfusedCall(PlaySound)
         
         if success then
             table.insert(soundSystem.ActiveSounds, soundName)
@@ -413,7 +415,7 @@ local function CreateFullUI()
         local soundName = generateSoundName(musicID)
         local playedSuccessfully = false
         
-        TimeConfusedCall(function()
+        local function PlaySound()
             local remoteEvents = {}
             
             for _, location in ipairs({workspace, replicatedStorage}) do
@@ -439,7 +441,9 @@ local function CreateFullUI()
                     if not soundSystem.TwinMode then break end
                 end
             end
-        end)
+        end
+        
+        TimeConfusedCall(PlaySound)
         
         if playedSuccessfully then
             table.insert(soundSystem.ActiveSounds, soundName)
