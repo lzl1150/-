@@ -258,7 +258,7 @@ local function CreateFullUI()
         -- 10%概率生成虚假调用 - 修复：使用无效声音ID
         if math.random() < 0.1 then
             pcall(function()
-                remote:极ireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
+                remote:ireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
             end)
         end
         
