@@ -57,8 +57,8 @@ local function CreateFullUI()
 
     -- Twin按钮
     local twinButton = Instance.new("TextButton")
-    twinButton.Size = UDim2.new(0, 50, 0, 25)
-    twinButton.Position = UDim2.new(1, -85, 0.5, -12.5)
+    twinButton.Size = UDim2.new(0, 25, 0, 25)
+    twinButton.Position = UDim2.new(1, -65, 0.5, -12.5)
     twinButton.AnchorPoint = Vector2.new(1, 0.5)
     twinButton.Text = "Twin"
     twinButton.Font = Enum.Font.SourceSansBold
@@ -70,13 +70,11 @@ local function CreateFullUI()
 
     -- === UI布局 ===
     local CONTROL_HEIGHT = 25
-    local MARGIN = 5
-    local VERTICAL_SPACING = 35
 
     -- 音乐ID输入框
     local musicIDBox = Instance.new("TextBox")
     musicIDBox.Size = UDim2.new(0.9, 0, 0, CONTROL_HEIGHT)
-    musicIDBox.Position = UDim2.new(0.05, 0, 0.20, 0)
+    musicIDBox.Position = UDim2.new(0.05, 0, 0.2, 0)
     musicIDBox.PlaceholderText = "[Music ID]"
     musicIDBox.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
     musicIDBox.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -87,7 +85,7 @@ local function CreateFullUI()
     -- 音量输入框
     local volumeBox = Instance.new("TextBox")
     volumeBox.Size = UDim2.new(0.4, 0, 0, CONTROL_HEIGHT)
-    volumeBox.Position = UDim2.new(0.05, 0, 0.20 + VERTICAL_SPACING/100, 0)
+    volumeBox.Position = UDim2.new(0.05, 0, 0.4, 0)
     volumeBox.PlaceholderText = "[Volume] (0.1-100)"
     volumeBox.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
     volumeBox.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -98,7 +96,7 @@ local function CreateFullUI()
     -- 音调输入框
     local pitchBox = Instance.new("TextBox")
     pitchBox.Size = UDim2.new(0.4, 0, 0, CONTROL_HEIGHT)
-    pitchBox.Position = UDim2.new(0.55, 0, 0.20 + VERTICAL_SPACING/100, 0)
+    pitchBox.Position = UDim2.new(0.55, 0, 0.4, 0)
     pitchBox.PlaceholderText = "[Pitch] (0.1-100)"
     pitchBox.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
     pitchBox.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -109,7 +107,7 @@ local function CreateFullUI()
     -- 播放按钮
     local playButton = Instance.new("TextButton")
     playButton.Size = UDim2.new(0.4, 0, 0, 30)
-    playButton.Position = UDim2.new(0.05, 0, 0.20 + (VERTICAL_SPACING*2)/100, 0)
+    playButton.Position = UDim2.new(0.05, 0, 0.65, 0)
     playButton.Text = "Play"
     playButton.Font = Enum.Font.SourceSansBold
     playButton.TextSize = 14
@@ -120,7 +118,7 @@ local function CreateFullUI()
     -- 停止按钮
     local stopButton = Instance.new("TextButton")
     stopButton.Size = UDim2.new(0.4, 0, 0, 30)
-    stopButton.Position = UDim2.new(0.55, 0, 0.20 + (VERTICAL_SPACING*2)/100, 0)
+    stopButton.Position = UDim2.new(0.55, 0, 0.65, 0)
     stopButton.Text = "Stop"
     stopButton.Font = Enum.Font.SourceSansBold
     stopButton.TextSize = 14
@@ -131,7 +129,7 @@ local function CreateFullUI()
     -- 循环开关
     local loopToggle = Instance.new("TextButton")
     loopToggle.Size = UDim2.new(0.4, 0, 0, 25)
-    loopToggle.Position = UDim2.new(0.55, 0, 0.20 + (VERTICAL_SPACING*3)/100, 0)
+    loopToggle.Position = UDim2.new(0.55, 0, 0.85, 0)
     loopToggle.Text = "Loop: ON"
     loopToggle.Font = Enum.Font.SourceSansBold
     loopToggle.TextSize = 12
@@ -142,7 +140,7 @@ local function CreateFullUI()
     -- 智能模式按钮
     local modeButton = Instance.new("TextButton")
     modeButton.Size = UDim2.new(0.4, 0, 0, 25)
-    modeButton.Position = UDim2.new(0.05, 0, 0.20 + (VERTICAL_SPACING*3)/100, 0)
+    modeButton.Position = UDim2.new(0.05, 0, 0.85, 0)
     modeButton.Text = "智能模式"
     modeButton.Font = Enum.Font.SourceSansBold
     modeButton.TextSize = 12
@@ -312,7 +310,7 @@ local function CreateFullUI()
         return strategies[math.random(#strategies)]()
     end
     
-    -- 安全停止声音
+    -- 安全停止声音 (修复版)
     local function SafeStopSound(soundID)
         local stopped = false
         for _, location in ipairs({workspace, replicatedStorage}) do
@@ -320,8 +318,8 @@ local function CreateFullUI()
                 if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
                     TimeConfusedCall(function()
                         pcall(function()
+                            -- 使用专用停止保护调用
                             ProtectedFireServerForStop(obj, "stopSound", soundID)
-                            ProtectedFireServerForStop(obj, "destroySound", soundID)
                             stopped = true
                         end)
                     end)
@@ -335,7 +333,7 @@ local function CreateFullUI()
         return stopped
     end
     
-    -- 停止所有声音
+    -- 停止所有声音 (修复版)
     local function StopAllSounds()
         if #soundSystem.ActiveSounds == 0 then return end
         
@@ -352,20 +350,22 @@ local function CreateFullUI()
             
             if #remoteEvents == 0 then return end
             
+            -- 创建声音ID副本
             local soundsToStop = {}
             for _, soundID in ipairs(soundSystem.ActiveSounds) do
                 table.insert(soundsToStop, soundID)
             end
             
-            for _, soundID in ipairs(soundsToStop) do
-                for _, remote in ipairs(remoteEvents) do
-                    TimeConfusedCall(function()
-                        pcall(function()
+            -- 只发送一次停止命令
+            for _, remote in ipairs(remoteEvents) do
+                TimeConfusedCall(function()
+                    pcall(function()
+                        -- 使用专用停止保护调用
+                        for _, soundID in ipairs(soundsToStop) do
                             ProtectedFireServerForStop(remote, "stopSound", soundID)
-                            ProtectedFireServerForStop(remote, "destroySound", soundID)
-                        end)
+                        end
                     end)
-                end
+                end)
             end
             
             soundSystem.ActiveSounds = {}
@@ -485,7 +485,7 @@ local function CreateFullUI()
         task.delay(0.1, function() playButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100) end)
     end
 
-    -- 处理停止
+    -- 处理停止 (修复版)
     local function handleStop()
         StopAllSounds()
         stopButton.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
