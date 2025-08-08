@@ -15,6 +15,7 @@ local function CreateFullUI()
     screenGui.DisplayOrder = 999
     screenGui.Parent = player.PlayerGui
 
+    -- 主框架
     local mainFrame = Instance.new("Frame")
     mainFrame.Size = UDim2.new(0, 300, 0, 200)
     mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
@@ -23,6 +24,7 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
 
+    -- 标题栏
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
@@ -39,6 +41,7 @@ local function CreateFullUI()
     titleLabel.BackgroundTransparency = 1
     titleLabel.Parent = titleBar
 
+    -- 关闭按钮
     local closeButton = Instance.new("TextButton")
     closeButton.Size = UDim2.new(0, 25, 0, 25)
     closeButton.Position = UDim2.new(1, -30, 0.5, -12.5)
@@ -52,70 +55,102 @@ local function CreateFullUI()
     closeButton.Parent = titleBar
     closeButton.MouseButton1Click:Connect(function() screenGui:Destroy() end)
 
+    -- Twin按钮
     local twinButton = Instance.new("TextButton")
-    twinButton.Size = UDim2.new(0, 25, 0, 25)
-    twinButton.Position = UDim2.new(1, -65, 0.5, -12.5)
+    twinButton.Size = UDim2.new(0, 50, 0, 25)
+    twinButton.Position = UDim2.new(1, -85, 0.5, -12.5)
     twinButton.AnchorPoint = Vector2.new(1, 0.5)
     twinButton.Text = "Twin"
     twinButton.Font = Enum.Font.SourceSansBold
     twinButton.TextSize = 12
-    twinButton.TextColor = Color3.fromRGB(255, 255, 255)
+    twinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     twinButton.BackgroundColor3 = Color3.fromRGB(120, 120, 200)
     twinButton.BorderSizePixel = 0
     twinButton.Parent = titleBar
 
-    -- 修复的输入框创建函数
-    local function CreateInputBox(posY, placeholder, sizeX, posX)
-        local box = Instance.new("TextBox")
-        box.Size = UDim2.new(sizeX, 0, 0, 25)
-        box.Position = UDim2.new(posX, 0, posY, 0)
-        box.PlaceholderText = placeholder
-        box.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
-        box.TextColor3 = Color3.fromRGB(0, 0, 0)
-        box.Font = Enum.Font.SourceSans
-        box.TextSize = 14
-        box.Parent = mainFrame
-        return box
-    end
+    -- === UI布局 ===
+    local CONTROL_HEIGHT = 25
+    local MARGIN = 5
+    local VERTICAL_SPACING = 35
 
-    local musicIDBox = CreateInputBox(0.2, "[Music ID]", 0.9, 0.05)
-    local volumeBox = CreateInputBox(0.4, "[Volume] (0.1-100)", 0.4, 0.05)
-    local pitchBox = CreateInputBox(0.4, "[Pitch] (0.1-100)", 0.4, 0.55)
+    -- 音乐ID输入框
+    local musicIDBox = Instance.new("TextBox")
+    musicIDBox.Size = UDim2.new(0.9, 0, 0, CONTROL_HEIGHT)
+    musicIDBox.Position = UDim2.new(0.05, 0, 0.20, 0)
+    musicIDBox.PlaceholderText = "[Music ID]"
+    musicIDBox.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+    musicIDBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+    musicIDBox.Font = Enum.Font.SourceSans
+    musicIDBox.TextSize = 14
+    musicIDBox.Parent = mainFrame
 
-    local function CreateButton(text, posX, posY, sizeX, color)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(sizeX, 0, 0, 30)
-        btn.Position = UDim2.new(posX, 0, posY, 0)
-        btn.Text = text
-        btn.Font = Enum.Font.SourceSansBold
-        btn.TextSize = 14
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.BackgroundColor3 = color
-        btn.Parent = mainFrame
-        return btn
-    end
+    -- 音量输入框
+    local volumeBox = Instance.new("TextBox")
+    volumeBox.Size = UDim2.new(0.4, 0, 0, CONTROL_HEIGHT)
+    volumeBox.Position = UDim2.new(0.05, 0, 0.20 + VERTICAL_SPACING/100, 0)
+    volumeBox.PlaceholderText = "[Volume] (0.1-100)"
+    volumeBox.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+    volumeBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+    volumeBox.Font = Enum.Font.SourceSans
+    volumeBox.TextSize = 14
+    volumeBox.Parent = mainFrame
 
-    local playButton = CreateButton("Play", 0.05, 0.65, 0.4, Color3.fromRGB(100, 100, 100))
-    local stopButton = CreateButton("Stop", 0.55, 0.65, 0.4, Color3.fromRGB(150, 50, 50))
+    -- 音调输入框
+    local pitchBox = Instance.new("TextBox")
+    pitchBox.Size = UDim2.new(0.4, 0, 0, CONTROL_HEIGHT)
+    pitchBox.Position = UDim2.new(0.55, 0, 0.20 + VERTICAL_SPACING/100, 0)
+    pitchBox.PlaceholderText = "[Pitch] (0.1-100)"
+    pitchBox.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+    pitchBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+    pitchBox.Font = Enum.Font.SourceSans
+    pitchBox.TextSize = 14
+    pitchBox.Parent = mainFrame
 
-    local function CreateToggleButton(text, posX, posY, sizeX, color)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(sizeX, 0, 0, 25)
-        btn.Position = UDim2.new(posX, 0, posY, 0)
-        btn.Text = text
-        btn.Font = Enum.Font.SourceSansBold
-        btn.TextSize = 12
-        btn.BackgroundColor3 = color
-        btn.Parent = mainFrame
-        return btn
-    end
+    -- 播放按钮
+    local playButton = Instance.new("TextButton")
+    playButton.Size = UDim2.new(0.4, 0, 0, 30)
+    playButton.Position = UDim2.new(0.05, 0, 0.20 + (VERTICAL_SPACING*2)/100, 0)
+    playButton.Text = "Play"
+    playButton.Font = Enum.Font.SourceSansBold
+    playButton.TextSize = 14
+    playButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    playButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    playButton.Parent = mainFrame
 
-    local loopToggle = CreateToggleButton("Loop: ON", 0.55, 0.85, 0.4, Color3.new(0,0,0))
+    -- 停止按钮
+    local stopButton = Instance.new("TextButton")
+    stopButton.Size = UDim2.new(0.4, 0, 0, 30)
+    stopButton.Position = UDim2.new(0.55, 0, 0.20 + (VERTICAL_SPACING*2)/100, 0)
+    stopButton.Text = "Stop"
+    stopButton.Font = Enum.Font.SourceSansBold
+    stopButton.TextSize = 14
+    stopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    stopButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+    stopButton.Parent = mainFrame
+
+    -- 循环开关
+    local loopToggle = Instance.new("TextButton")
+    loopToggle.Size = UDim2.new(0.4, 0, 0, 25)
+    loopToggle.Position = UDim2.new(0.55, 0, 0.20 + (VERTICAL_SPACING*3)/100, 0)
+    loopToggle.Text = "Loop: ON"
+    loopToggle.Font = Enum.Font.SourceSansBold
+    loopToggle.TextSize = 12
     loopToggle.BackgroundTransparency = 1
     loopToggle.TextColor3 = Color3.fromRGB(0, 200, 0)
+    loopToggle.Parent = mainFrame
 
-    local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
+    -- 智能模式按钮
+    local modeButton = Instance.new("TextButton")
+    modeButton.Size = UDim2.new(0.4, 0, 0, 25)
+    modeButton.Position = UDim2.new(0.05, 0, 0.20 + (VERTICAL_SPACING*3)/100, 0)
+    modeButton.Text = "智能模式"
+    modeButton.Font = Enum.Font.SourceSansBold
+    modeButton.TextSize = 12
+    modeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    modeButton.BackgroundColor3 = Color3.fromRGB(180, 180, 255)
+    modeButton.Parent = mainFrame
 
+    -- === 功能系统 ===
     local soundSystem = {
         LoopEnabled = true,
         ActiveSounds = {},
@@ -155,6 +190,7 @@ local function CreateFullUI()
     UpdateModeButton()
     UpdateTwinModeButton()
     
+    -- 生成混淆ID
     local function GenerateConfusedID()
         local ids = {}
         local allPlayers = game:GetService("Players"):GetPlayers()
@@ -183,12 +219,14 @@ local function CreateFullUI()
         return ids[math.random(#ids)]
     end
     
+    -- 生成虚假玩家名
     local function GenerateFakeUsername()
         local prefixes = {"Player", "User", "Guest", "Roblox", "Game", "Sound", "Music", "Audio"}
         local suffixes = {"123", "456", "789", "X", "Pro", "Master", "Lover", "Fan", "King", "Queen"}
         return prefixes[math.random(#prefixes)]..suffixes[math.random(#suffixes)]..math.random(100,999)
     end
     
+    -- 保护远程调用
     local function ProtectedFireServer(remote, ...)
         local args = {...}
         table.insert(args, GenerateConfusedID())
@@ -225,6 +263,7 @@ local function CreateFullUI()
         return pcall(function() remote:FireServer(unpack(args)) end)
     end
     
+    -- 停止专用保护调用
     local function ProtectedFireServerForStop(remote, command, soundID)
         local args = {command, soundID}
         table.insert(args, GenerateConfusedID())
@@ -238,22 +277,26 @@ local function CreateFullUI()
         return pcall(function() remote:FireServer(unpack(args)) end)
     end
     
+    -- 时间混淆系统
     local function TimeConfusedCall(callback)
         local delay = math.random(5, 30)/100
         runService.Heartbeat:Wait()
         task.delay(delay, callback)
     end
     
+    -- 生成自然名称
     local function generateNaturalName()
         local prefixes = {"Music", "Sound", "Track", "Audio", "BG", "SFX", "Ambient"}
         local suffixes = {"Player", "System", "Device", "Box", "Machine", "Unit"}
         return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..math.random(1000,9999)
     end
     
+    -- 生成音乐ID名称
     local function generateMusicIDName(musicID)
         return #musicID < 6 and "Audio_"..musicID or "Audio_"..musicID:sub(-6)
     end
     
+    -- 生成随机名称
     local function generateRandomName()
         local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         local name = ""
@@ -263,11 +306,13 @@ local function CreateFullUI()
         return name
     end
     
+    -- 生成声音名称
     local function generateSoundName(musicID)
         local strategies = {generateNaturalName, generateRandomName, function() return generateMusicIDName(musicID) end}
         return strategies[math.random(#strategies)]()
     end
     
+    -- 安全停止声音
     local function SafeStopSound(soundID)
         local stopped = false
         for _, location in ipairs({workspace, replicatedStorage}) do
@@ -290,6 +335,7 @@ local function CreateFullUI()
         return stopped
     end
     
+    -- 停止所有声音
     local function StopAllSounds()
         if #soundSystem.ActiveSounds == 0 then return end
         
@@ -327,6 +373,7 @@ local function CreateFullUI()
         end)
     end
     
+    -- 缓存模式播放
     local function Mode1_Play(musicID, volume, pitch, loopEnabled)
         if soundSystem.RemoteEvent and not soundSystem.RemoteEvent:IsDescendantOf(game) then
             soundSystem.RemoteEvent = nil
@@ -371,6 +418,7 @@ local function CreateFullUI()
         end
     end
 
+    -- 遍历模式播放
     local function Mode2_Play(musicID, volume, pitch, loopEnabled)
         local soundName = generateSoundName(musicID)
         local playedSuccessfully = false
@@ -411,10 +459,12 @@ local function CreateFullUI()
         return playedSuccessfully
     end
     
+    -- 自动模式播放
     local function AutoMode_Play(musicID, volume, pitch, loopEnabled)
         return Mode1_Play(musicID, volume, pitch, loopEnabled) or Mode2_Play(musicID, volume, pitch, loopEnabled)
     end
     
+    -- 处理播放
     local function handlePlayback()
         local musicID = musicIDBox.Text:gsub("%D+", "")
         if not musicID:match("^%d+$") or #musicID < 6 then return end
@@ -435,12 +485,14 @@ local function CreateFullUI()
         task.delay(0.1, function() playButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100) end)
     end
 
+    -- 处理停止
     local function handleStop()
         StopAllSounds()
         stopButton.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
         task.delay(0.1, function() stopButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50) end)
     end
     
+    -- 连接按钮事件
     playButton.MouseButton1Click:Connect(handlePlayback)
     stopButton.MouseButton1Click:Connect(handleStop)
     loopToggle.MouseButton1Click:Connect(function()
@@ -449,6 +501,7 @@ local function CreateFullUI()
         loopToggle.TextColor3 = soundSystem.LoopEnabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
     end)
 
+    -- 拖动功能
     local dragActive, dragStart, frameStart = false, Vector2.new(), UDim2.new()
 
     mainFrame.InputBegan:Connect(function(input)
@@ -470,6 +523,7 @@ local function CreateFullUI()
 
     mainFrame.InputEnded:Connect(function() dragActive = false end)
 
+    -- 初始化测试
     task.spawn(function()
         Mode1_Play("0", 0, 1, false)
     end)
