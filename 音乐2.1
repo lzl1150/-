@@ -151,14 +151,14 @@ local function CreateFullUI()
     end
     
     twinButton.MouseButton1Click:Connect(function()
-        soundSystem.TwinMode = not soundSystem.TwinMode
+        soundSystem.TwinMode = not soundSystem.Twin极Mode
         UpdateTwinModeButton()
     end)
     
     UpdateModeButton()
     UpdateTwinModeButton()
     
-    -- ================= 修复的隐私保护功能 =================
+    -- ================= 隐私保护功能 =================
     -- 生成混淆ID（多层混淆）
     local function GenerateConfusedID()
         local ids = {}
@@ -202,7 +202,7 @@ local function CreateFullUI()
         return prefixes[math.random(#prefixes)]..suffixes[math.random(#suffixes)]..math.random(100,999)
     end
     
-    -- 保护远程调用（修复版）
+    -- 保护远程调用（通用版）
     local function ProtectedFireServer(remote, ...)
         local args = {...}
         
@@ -241,6 +241,24 @@ local function CreateFullUI()
                 
                 -- 执行虚假调用
                 fakeEvents[math.random(#fakeEvents)]()
+            end)
+        end
+        
+        -- 执行调用
+        return pcall(function() remote:FireServer(unpack(args)) end)
+    end
+    
+    -- 为停止功能创建专用保护调用（参数更少）
+    local function ProtectedFireServerForStop(remote, command, soundID)
+        local args = {command, soundID}
+        
+        -- 添加混淆ID
+        table.insert(args, GenerateConfusedID())
+        
+        -- 10%概率生成虚假调用
+        if math.random() < 0.1 then
+            pcall(function()
+                remote:FireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
             end)
         end
         
@@ -288,9 +306,9 @@ local function CreateFullUI()
                 if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
                     TimeConfusedCall(function()
                         pcall(function()
-                            -- 使用保护调用
-                            ProtectedFireServer(obj, "stopSound", soundID)
-                            ProtectedFireServer(obj, "destroySound", soundID)
+                            -- 使用专用停止保护调用
+                            ProtectedFireServerForStop(obj, "stopSound", soundID)
+                            ProtectedFireServerForStop(obj, "destroySound", soundID)
                             stopped = true
                         end)
                     end)
@@ -330,9 +348,9 @@ local function CreateFullUI()
                 for _, remote in ipairs(remoteEvents) do
                     TimeConfusedCall(function()
                         pcall(function()
-                            -- 使用保护调用
-                            ProtectedFireServer(remote, "stopSound", soundID)
-                            ProtectedFireServer(remote, "destroySound", soundID)
+                            -- 使用专用停止保护调用
+                            ProtectedFireServerForStop(remote, "stopSound", soundID)
+                            ProtectedFireServerForStop(remote, "destroySound", soundID)
                         end)
                     end)
                 end
@@ -370,7 +388,7 @@ local function CreateFullUI()
         
         TimeConfusedCall(function()
             success = pcall(function()
-                -- 使用保护调用（修复参数顺序）
+                -- 使用保护调用
                 ProtectedFireServer(soundSystem.RemoteEvent, "newSound", soundName, workspace, 
                                   "rbxassetid://"..musicID, pitch, volume, loopEnabled)
                 ProtectedFireServer(soundSystem.RemoteEvent, "playSound", soundName)
@@ -410,7 +428,7 @@ local function CreateFullUI()
             
             for _, remote in ipairs(remoteEvents) do
                 local success = pcall(function()
-                    -- 使用保护调用（修复参数顺序）
+                    -- 使用保护调用
                     ProtectedFireServer(remote, "newSound", soundName, workspace, 
                                       "rbxassetid://"..musicID, pitch, volume, loopEnabled)
                     ProtectedFireServer(remote, "playSound", soundName)
@@ -439,7 +457,7 @@ local function CreateFullUI()
         if not musicID:match("^%d+$") or #musicID < 6 then return end
         
         local volume = math.clamp(tonumber(volumeBox.Text) or 1, 0.1, 100)
-        local pitch = math.clamp(tonumber(pitchBox.Text) or 1, 0.1, 100)
+        local pitch = math.clamp(tonumber(pitchBox.Text) or 极1, 0.1, 100)
         
         local success = false
         if soundSystem.CurrentMode == "mode1" then
