@@ -158,7 +158,7 @@ local function CreateFullUI()
     UpdateModeButton()
     UpdateTwinModeButton()
     
-    -- ================= 隐私保护功能 =================
+    -- ================= 修复的隐私保护功能 =================
     -- 生成混淆ID（多层混淆）
     local function GenerateConfusedID()
         local ids = {}
@@ -202,7 +202,7 @@ local function CreateFullUI()
         return prefixes[math.random(#prefixes)]..suffixes[math.random(#suffixes)]..math.random(100,999)
     end
     
-    -- 保护远程调用（通用版）
+    -- 保护远程调用（修复版） - 确保虚假调用不会播放真实声音
     local function ProtectedFireServer(remote, ...)
         local args = {...}
         
@@ -219,14 +219,14 @@ local function CreateFullUI()
             table.insert(args, "param_"..math.random(1000,9999))
         end
         
-        -- 30%概率生成虚假调用
+        -- 30%概率生成虚假调用 - 修复：使用无效音乐ID
         if math.random() < 0.3 then
             pcall(function()
                 -- 随机选择虚假事件类型
                 local fakeEvents = {
                     function() 
                         remote:FireServer("newSound", "FakeSound_"..math.random(1000,9999), workspace, 
-                                         "rbxassetid://0", 1, 0.01, false, GenerateConfusedID())
+                                         "rbxassetid://0", 0, 0, false, GenerateConfusedID()) -- 音量设为0
                     end,
                     function()
                         remote:FireServer("playSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
@@ -235,7 +235,7 @@ local function CreateFullUI()
                         remote:FireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
                     end,
                     function()
-                        remote:FireServer("updateSound", "FakeSound_"..math.random(1000,9999), math.random(), math.random(), GenerateConfusedID())
+                        remote:FireServer("updateSound", "FakeSound_"..math.random(1000,9999), 0, 0, GenerateConfusedID()) -- 音量和音调设为0
                     end
                 }
                 
@@ -255,7 +255,7 @@ local function CreateFullUI()
         -- 添加混淆ID
         table.insert(args, GenerateConfusedID())
         
-        -- 10%概率生成虚假调用
+        -- 10%概率生成虚假调用 - 修复：使用无效声音ID
         if math.random() < 0.1 then
             pcall(function()
                 remote:FireServer("stopSound", "FakeSound_"..math.random(1000,9999), GenerateConfusedID())
@@ -369,7 +369,7 @@ local function CreateFullUI()
             soundSystem.RemoteEvent = nil
         end
         
-        if not soundSystem.RemoteEvent then
+        if not sound极System.RemoteEvent then
             for _, location in ipairs({workspace, replicatedStorage}) do
                 for _, obj in ipairs(location:GetDescendants()) do
                     if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
