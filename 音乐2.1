@@ -151,7 +151,7 @@ local function CreateFullUI()
     end
     
     twinButton.MouseButton1Click:Connect(function()
-        soundSystem.TwinMode = not soundSystem.Twin极Mode
+        soundSystem.TwinMode = not soundSystem.TwinMode
         UpdateTwinModeButton()
     end)
     
@@ -277,7 +277,7 @@ local function CreateFullUI()
     local function generateNaturalName()
         local prefixes = {"Music", "Sound", "Track", "Audio", "BG", "SFX", "Ambient"}
         local suffixes = {"Player", "System", "Device", "Box", "Machine", "Unit"}
-        return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..math.random(1000,9999)
+        return prefixes[极math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..math.random(1000,9999)
     end
     
     local function generateMusicIDName(musicID)
@@ -457,7 +457,7 @@ local function CreateFullUI()
         if not musicID:match("^%d+$") or #musicID < 6 then return end
         
         local volume = math.clamp(tonumber(volumeBox.Text) or 1, 0.1, 100)
-        local pitch = math.clamp(tonumber(pitchBox.Text) or 极1, 0.1, 100)
+        local pitch = math.clamp(tonumber(pitchBox.Text) or 1, 0.1, 100)
         
         local success = false
         if soundSystem.CurrentMode == "mode1" then
