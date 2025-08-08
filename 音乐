@@ -1,0 +1,352 @@
+local player = game:GetService("Players").LocalPlayer
+local userInput = game:GetService("UserInputService")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+
+if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
+
+local function CreateFullUI()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "MusicController_"..math.random(1000,9999)
+    screenGui.ResetOnSpawn = false
+    screenGui.DisplayOrder = 999
+    screenGui.Parent = player.PlayerGui
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 300, 0, 200)
+    mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+    mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
+    mainFrame.BorderSizePixel = 1
+    mainFrame.Parent = screenGui
+
+    local titleBar = Instance.new("Frame")
+    titleBar.Size = UDim2.new(1, 0, 0, 30)
+    titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+    titleBar.Parent = mainFrame
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -60, 1, 0)
+    titleLabel.Position = UDim2.new(0, 5, 0, 0)
+    titleLabel.Text = "MUSIC PLAYER ♪♪[made by余客]"
+    titleLabel.TextColor3 = Color3.fromRGB(50, 50, 50)
+    titleLabel.TextSize = 18
+    titleLabel.Font = Enum.Font.SourceSansBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Parent = titleBar
+
+    local closeButton = Instance.new("TextButton")
+    closeButton.Size = UDim2.new(0, 25, 0, 25)
+    closeButton.Position = UDim2.new(1, -30, 0.5, -12.5)
+    closeButton.AnchorPoint = Vector2.new(1, 0.5)
+    closeButton.Text = "X"
+    closeButton.Font = Enum.Font.SourceSansBold
+    closeButton.TextSize = 16
+    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    closeButton.BorderSizePixel = 0
+    closeButton.Parent = titleBar
+    closeButton.MouseButton1Click:Connect(function() screenGui:Destroy() end)
+
+    local twinButton = Instance.new("TextButton")
+    twinButton.Size = UDim2.new(0, 25, 0, 25)
+    twinButton.Position = UDim2.new(1, -65, 0.5, -12.5)
+    twinButton.AnchorPoint = Vector2.new(1, 0.5)
+    twinButton.Text = "Twin"
+    twinButton.Font = Enum.Font.SourceSansBold
+    twinButton.TextSize = 12
+    twinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    twinButton.BackgroundColor3 = Color3.fromRGB(120, 120, 200)
+    twinButton.BorderSizePixel = 0
+    twinButton.Parent = titleBar
+
+    -- 输入框创建函数
+    local function CreateInputBox(posY, placeholder, sizeX, posX)
+        local box = Instance.new("TextBox")
+        box.Size = UDim2.new(sizeX, 0, 0, 25)
+        box.Position = UDim2.new(posX, 0, posY, 0)
+        box.PlaceholderText = placeholder
+        box.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+        box.TextColor3 = Color3.fromRGB(0, 0, 0)
+        box.Font = Enum.Font.SourceSans
+        box.TextSize = 14
+        box.Parent = mainFrame
+        return box
+    end
+
+    local musicIDBox = CreateInputBox(0.2, "[Music ID]", 0.9, 0.05)
+    local volumeBox = CreateInputBox(0.4, "[Volume] (0.1-100)", 0.4, 0.05)
+    local pitchBox = CreateInputBox(0.4, "[Pitch] (0.1-100)", 0.4, 0.55)
+
+    -- 按钮创建函数
+    local function CreateButton(text, posX, posY, sizeX, color)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(sizeX, 0, 0, 30)
+        btn.Position = UDim2.new(posX, 0, posY, 0)
+        btn.Text = text
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextSize = 14
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.BackgroundColor3 = color
+        btn.Parent = mainFrame
+        return btn
+    end
+
+    local playButton = CreateButton("Play", 0.05, 0.65, 0.4, Color3.fromRGB(100, 100, 100))
+    local stopButton = CreateButton("Stop", 0.55, 0.65, 0.4, Color3.fromRGB(150, 50, 50))
+
+    -- 切换按钮创建函数
+    local function CreateToggleButton(text, posX, posY, sizeX, color)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(sizeX, 0, 0, 25)
+        btn.Position = UDim2.new(posX, 0, posY, 0)
+        btn.Text = text
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextSize = 12
+        btn.BackgroundColor3 = color
+        btn.Parent = mainFrame
+        return btn
+    end
+
+    local loopToggle = CreateToggleButton("Loop: ON", 0.55, 0.85, 0.4, Color3.new(0,0,0))
+    loopToggle.BackgroundTransparency = 1
+    loopToggle.TextColor3 = Color3.fromRGB(0, 200, 0)
+
+    local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
+
+    local soundSystem = {
+        LoopEnabled = true,
+        ActiveSounds = {},
+        RemoteEvent = nil,
+        CurrentMode = "auto",
+        ModeNames = {auto = "智能模式", mode1 = "缓存模式", mode2 = "遍历模式"},
+        ModeColors = {
+            auto = Color3.fromRGB(180, 180, 255),
+            mode1 = Color3.fromRGB(180, 255, 180),
+            mode2 = Color3.fromRGB(255, 180, 180)
+        },
+        LastSoundName = nil,
+        TwinMode = false
+    }
+    
+    local function UpdateModeButton()
+        modeButton.Text = soundSystem.ModeNames[soundSystem.CurrentMode]
+        modeButton.BackgroundColor3 = soundSystem.ModeColors[soundSystem.CurrentMode]
+    end
+    
+    modeButton.MouseButton1Click:Connect(function()
+        soundSystem.CurrentMode = soundSystem.CurrentMode == "auto" and "mode1" or 
+                                 soundSystem.CurrentMode == "mode1" and "mode2" or "auto"
+        UpdateModeButton()
+    end)
+    
+    local function UpdateTwinModeButton()
+        twinButton.BackgroundColor3 = soundSystem.TwinMode and 
+            Color3.fromRGB(70, 130, 200) or Color3.fromRGB(120, 120, 180)
+    end
+    
+    twinButton.MouseButton1Click:Connect(function()
+        soundSystem.TwinMode = not soundSystem.TwinMode
+        UpdateTwinModeButton()
+    end)
+    
+    UpdateModeButton()
+    UpdateTwinModeButton()
+    
+    local function generateNaturalName()
+        local prefixes = {"Music", "Sound", "Track", "Audio", "BG", "SFX", "Ambient"}
+        local suffixes = {"Player", "System", "Device", "Box", "Machine", "Unit"}
+        return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..math.random(1000,9999)
+    end
+    
+    local function generateMusicIDName(musicID)
+        return #musicID < 6 and "Audio_"..musicID or "Audio_"..musicID:sub(-6)
+    end
+    
+    local function generateRandomName()
+        local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        local name = ""
+        for i = 1, math.random(8,12) do
+            name = name .. string.sub(chars, math.random(1, #chars), math.random(1, #chars))
+        end
+        return name
+    end
+    
+    local function generateSoundName(musicID)
+        local strategies = {generateNaturalName, generateRandomName, function() return generateMusicIDName(musicID) end}
+        return strategies[math.random(#strategies)]()
+    end
+    
+    local function SafeStopSound(soundID)
+        local stopped = false
+        for _, location in ipairs({workspace, replicatedStorage}) do
+            for _, obj in ipairs(location:GetDescendants()) do
+                if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
+                    pcall(function()
+                        obj:FireServer("stopSound", soundID)
+                        obj:FireServer("destroySound", soundID)
+                        stopped = true
+                    end)
+                end
+            end
+        end
+        
+        for i = #soundSystem.ActiveSounds, 1, -1 do
+            if soundSystem.ActiveSounds[i] == soundID then table.remove(soundSystem.ActiveSounds, i) end
+        end
+        return stopped
+    end
+    
+    local function Mode1_Play(musicID, volume, pitch, loopEnabled)
+        if not soundSystem.RemoteEvent then
+            for _, location in ipairs({workspace, replicatedStorage}) do
+                for _, obj in ipairs(location:GetDescendants()) do
+                    if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
+                        soundSystem.RemoteEvent = obj
+                        break
+                    end
+                end
+                if soundSystem.RemoteEvent then break end
+            end
+        end
+        
+        if not soundSystem.RemoteEvent then return false end
+        
+        local soundName = generateSoundName(musicID)
+        local success = pcall(function()
+            soundSystem.RemoteEvent:FireServer("newSound", soundName, workspace, 
+                              "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+            soundSystem.RemoteEvent:FireServer("playSound", soundName)
+        end)
+        
+        if success then
+            table.insert(soundSystem.ActiveSounds, soundName)
+            soundSystem.LastSoundName = soundName
+            return true
+        else
+            soundSystem.RemoteEvent = nil
+            return false
+        end
+    end
+
+    local function Mode2_Play(musicID, volume, pitch, loopEnabled)
+        local soundName = generateSoundName(musicID)
+        local playedSuccessfully = false
+        local remoteEvents = {}
+        
+        for _, location in ipairs({workspace, replicatedStorage}) do
+            for _, v in ipairs(location:GetDescendants()) do
+                if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
+                    table.insert(remoteEvents, v)
+                end
+            end
+        end
+        
+        if #remoteEvents == 0 then return false end
+        
+        for _, remote in ipairs(remoteEvents) do
+            local success = pcall(function()
+                remote:FireServer("newSound", soundName, workspace, 
+                                  "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+                remote:FireServer("playSound", soundName)
+            end)
+            
+            if success then
+                playedSuccessfully = true
+                if not soundSystem.TwinMode then break end
+            end
+        end
+        
+        if playedSuccessfully then
+            table.insert(soundSystem.ActiveSounds, soundName)
+            soundSystem.LastSoundName = soundName
+        end
+        return playedSuccessfully
+    end
+    
+    local function AutoMode_Play(musicID, volume, pitch, loopEnabled)
+        return Mode1_Play(musicID, volume, pitch, loopEnabled) or Mode2_Play(musicID, volume, pitch, loopEnabled)
+    end
+    
+    local function StopAllSounds()
+        if #soundSystem.ActiveSounds == 0 then return end
+        local remoteEvents = {}
+        
+        for _, location in ipairs({workspace, replicatedStorage}) do
+            for _, v in ipairs(location:GetDescendants()) do
+                if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
+                    table.insert(remoteEvents, v)
+                end
+            end
+        end
+        
+        if #remoteEvents == 0 then return end
+        
+        for _, soundID in ipairs(soundSystem.ActiveSounds) do
+            for _, remote in ipairs(remoteEvents) do
+                pcall(function()
+                    remote:FireServer("stopSound", soundID)
+                    remote:FireServer("destroySound", soundID)
+                end)
+            end
+        end
+        
+        soundSystem.ActiveSounds = {}
+        soundSystem.LastSoundName = nil
+    end
+    
+    local function handlePlayback()
+        local musicID = musicIDBox.Text:gsub("%D+", "")
+        if not musicID:match("^%d+$") or #musicID < 6 then return end
+        
+        local volume = math.clamp(tonumber(volumeBox.Text) or 1, 0.1, 100)
+        local pitch = math.clamp(tonumber(pitchBox.Text) or 1, 0.1, 100)
+        
+        local success = soundSystem.CurrentMode == "mode1" and Mode1_Play(musicID, volume, pitch, soundSystem.LoopEnabled) or
+                       soundSystem.CurrentMode == "mode2" and Mode2_Play(musicID, volume, pitch, soundSystem.LoopEnabled) or
+                       AutoMode_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
+        
+        playButton.BackgroundColor3 = success and Color3.fromRGB(70, 170, 70) or Color3.fromRGB(170, 70, 70)
+        task.delay(0.1, function() playButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100) end)
+    end
+
+    local function handleStop()
+        StopAllSounds()
+        stopButton.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
+        task.delay(0.1, function() stopButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50) end)
+    end
+    
+    playButton.MouseButton1Click:Connect(handlePlayback)
+    stopButton.MouseButton1Click:Connect(handleStop)
+    loopToggle.MouseButton1Click:Connect(function()
+        soundSystem.LoopEnabled = not soundSystem.LoopEnabled
+        loopToggle.Text = soundSystem.LoopEnabled and "Loop: ON" or "Loop: OFF"
+        loopToggle.TextColor3 = soundSystem.LoopEnabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+    end)
+
+    local dragActive, dragStart, frameStart = false, Vector2.new(), UDim2.new()
+
+    mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragActive = true
+            dragStart = input.Position
+            frameStart = mainFrame.Position
+        end
+    end)
+
+    mainFrame.InputChanged:Connect(function(input)
+        if dragActive then
+            local currentPos = input.UserInputType == Enum.UserInputType.Touch and input.Position or userInput:GetMouseLocation()
+            local delta = currentPos - dragStart
+            mainFrame.Position = UDim2.new(frameStart.X.Scale, frameStart.X.Offset + delta.X, frameStart.Y.Scale, frameStart.Y.Offset + delta.Y)
+        end
+    end)
+
+    mainFrame.InputEnded:Connect(function() dragActive = false end)
+
+    task.spawn(function() Mode1_Play("0", 0, 1, false) end)
+
+    return screenGui
+end
+
+CreateFullUI()
