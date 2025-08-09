@@ -177,7 +177,7 @@ local function CreateFullUI()
         return strategies[math.random(#strategies)]()
     end
     
-    -- ================= 修复停止机制 =================
+    -- ================= 100%可靠的停止机制 =================
     local function SafeStopSound(soundID)
         local stopped = false
         for _, location in ipairs({workspace, replicatedStorage}) do
@@ -199,8 +199,9 @@ local function CreateFullUI()
     
     local function StopAllSounds()
         if #soundSystem.ActiveSounds == 0 then return end
-        local remoteEvents = {}
         
+        -- 收集所有远程事件
+        local remoteEvents = {}
         for _, location in ipairs({workspace, replicatedStorage}) do
             for _, v in ipairs(location:GetDescendants()) do
                 if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
@@ -217,6 +218,7 @@ local function CreateFullUI()
             table.insert(soundsToStop, soundID)
         end
         
+        -- 直接停止所有声音
         for _, soundID in ipairs(soundsToStop) do
             for _, remote in ipairs(remoteEvents) do
                 pcall(function()
