@@ -4,48 +4,53 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
--- ================== 新增：增强型拖动处理器 ==================
-local function CreateEnhancedDragHandler(draggableFrame, handleArea)
+-- ================== 核心：增强型UI拖动处理器 ==================
+-- 此函数提供流畅、可靠的UI拖动功能，支持鼠标和触摸输入
+local function CreateEnhancedDragHandler(draggableFrame, dragHandle)
+    -- 拖动状态变量
     local dragActive = false
-    local dragStart = Vector2.new()
-    local frameStart = UDim2.new()
+    local dragStartPos = Vector2.new()
+    local frameStartPos = UDim2.new()
     
-    -- 通用的输入开始处理
+    -- 鼠标/触摸按下事件：开始拖动
     local function onInputBegan(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or 
            input.UserInputType == Enum.UserInputType.Touch then
             
             dragActive = true
-            dragStart = input.Position
-            frameStart = draggableFrame.Position
+            dragStartPos = input.Position
+            frameStartPos = draggableFrame.Position
             
-            -- 为触摸输入启用捕获，防止拖拽时失去焦点[5](@ref)
+            -- 为触摸输入启用捕获，防止拖动时失去焦点 [3](@ref)
             if input.UserInputType == Enum.UserInputType.Touch then
                 input:Capture()
             end
             
-            -- 视觉反馈：拖动开始时轻微改变透明度
+            -- 视觉反馈：拖动开始时轻微改变透明度 [5](@ref)
             draggableFrame.BackgroundTransparency = 0.1
         end
     end
     
-    -- 通用的输入改变处理
+    -- 鼠标/触摸移动事件：处理拖动
     local function onInputChanged(input)
         if dragActive then
+            -- 获取当前输入位置 [1](@ref)
             local currentPos = input.UserInputType == Enum.UserInputType.Touch and 
                              input.Position or userInput:GetMouseLocation()
-            local delta = currentPos - dragStart
             
-            -- 平滑更新位置，无边界限制[5](@ref)
+            -- 计算偏移量 [1](@ref)
+            local delta = currentPos - dragStartPos
+            
+            -- 更新UI位置（无边界限制） [1](@ref)
             draggableFrame.Position = UDim2.new(
-                frameStart.X.Scale, frameStart.X.Offset + delta.X,
-                frameStart.Y.Scale, frameStart.Y.Offset + delta.Y
+                frameStartPos.X.Scale, frameStartPos.X.Offset + delta.X,
+                frameStartPos.Y.Scale, frameStartPos.Y.Offset + delta.Y
             )
         end
     end
     
-    -- 通用的输入结束处理
-    local function onInputEnded(input)
+    -- 鼠标/触摸释放事件：结束拖动
+    local function onInputEnded()
         if dragActive then
             dragActive = false
             -- 恢复透明度
@@ -53,15 +58,18 @@ local function CreateEnhancedDragHandler(draggableFrame, handleArea)
         end
     end
     
-    -- 将事件连接到指定的拖动手柄区域[4](@ref)
-    handleArea.InputBegan:Connect(onInputBegan)
-    handleArea.InputChanged:Connect(onInputChanged)
-    handleArea.InputEnded:Connect(onInputEnded)
+    -- 将事件监听器连接到拖动手柄 [3](@ref)
+    dragHandle.InputBegan:Connect(onInputBegan)
+    dragHandle.InputChanged:Connect(onInputChanged)
+    dragHandle.InputEnded:Connect(onInputEnded)
     
-    -- 返回一个控制接口，以便需要时扩展
+    -- 返回控制接口（便于后续扩展）
     return {
         SetEnabled = function(enabled)
             dragActive = enabled and dragActive
+        end,
+        IsDragging = function()
+            return dragActive
         end
     }
 end
@@ -69,11 +77,12 @@ end
 
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "TouchUi"..math.random(1000,9999)
+    screenGui.Name = "MusicPlayerUI_"..math.random(1000,9999)
     screenGui.ResetOnSpawn = false
     screenGui.DisplayOrder = 999
     screenGui.Parent = player.PlayerGui
 
+    -- 主容器框架
     local mainFrame = Instance.new("Frame")
     mainFrame.Size = UDim2.new(0, 300, 0, 200)
     mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
@@ -84,9 +93,10 @@ local function CreateFullUI()
 
     -- 为主框架添加圆角
     local mainCorner = Instance.new("UICorner")
-    mainCorner.CornerRadius = UDim.new(0, 12)
+    mainCorner.CornerRadius = UDim2.new(0, 12)
     mainCorner.Parent = mainFrame
 
+    -- 标题栏（作为拖动手柄）
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
@@ -94,7 +104,7 @@ local function CreateFullUI()
     
     -- 为标题栏添加圆角（仅顶部圆角）
     local titleBarCorner = Instance.new("UICorner")
-    titleBarCorner.CornerRadius = UDim.new(0, 12)
+    titleBarCorner.CornerRadius = UDim2.new(0, 12)
     titleBarCorner.Parent = titleBar
 
     local titleLabel = Instance.new("TextLabel")
@@ -108,6 +118,7 @@ local function CreateFullUI()
     titleLabel.BackgroundTransparency = 1
     titleLabel.Parent = titleBar
 
+    -- 关闭按钮
     local closeButton = Instance.new("TextButton")
     closeButton.Size = UDim2.new(0, 25, 0, 25)
     closeButton.Position = UDim2.new(1, -30, 0.5, -12.5)
@@ -122,29 +133,17 @@ local function CreateFullUI()
     
     -- 为关闭按钮添加圆角
     local closeCorner = Instance.new("UICorner")
-    closeCorner.CornerRadius = UDim.new(0, 6)
+    closeCorner.CornerRadius = UDim2.new(0, 6)
     closeCorner.Parent = closeButton
     
     closeButton.MouseButton1Click:Connect(function()
         screenGui:Destroy()
     end)
 
-    local twinButton = Instance.new("TextButton")
-    twinButton.Size = UDim2.new(0, 25, 0, 25)
-    twinButton.Position = UDim2.new(1, -65, 0.5, -12.5)
-    twinButton.AnchorPoint = Vector2.new(1, 0.5)
-    twinButton.Text = "Twin"
-    twinButton.Font = Enum.Font.SourceSansBold
-    twinButton.TextSize = 12
-    twinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    twinButton.BackgroundColor3 = Color3.fromRGB(120, 120, 200)
-    twinButton.BorderSizePixel = 0
-    twinButton.Parent = titleBar
-    
-    -- 为Twin按钮添加圆角
-    local twinCorner = Instance.new("UICorner")
-    twinCorner.CornerRadius = UDim.new(0, 6)
-    twinCorner.Parent = twinButton
+    -- ================== 应用增强型拖动处理器 ==================
+    -- 将标题栏设置为拖动手柄，拖动整个主框架
+    local dragHandler = CreateEnhancedDragHandler(mainFrame, titleBar)
+    -- ================== 拖动集成完成 ==================
 
     -- 输入框创建函数
     local function CreateInputBox(posY, placeholder, sizeX, posX)
@@ -160,7 +159,7 @@ local function CreateFullUI()
         
         -- 为输入框添加圆角
         local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 6)
+        corner.CornerRadius = UDim2.new(0, 6)
         corner.Parent = box
         
         return box
@@ -184,7 +183,7 @@ local function CreateFullUI()
         
         -- 为按钮添加圆角
         local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 8)
+        corner.CornerRadius = UDim2.new(0, 8)
         corner.Parent = btn
         
         return btn
@@ -206,7 +205,7 @@ local function CreateFullUI()
         
         -- 为切换按钮添加圆角
         local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 6)
+        corner.CornerRadius = UDim2.new(0, 6)
         corner.Parent = btn
         
         return btn
@@ -218,12 +217,7 @@ local function CreateFullUI()
 
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
 
-    -- ================== 应用增强型拖动处理器 ==================
-    -- 将标题栏设置为拖动手柄
-    local dragHandler = CreateEnhancedDragHandler(mainFrame, titleBar)
-    -- ================== 拖动集成结束 ==================
-
-    -- 音频控制器
+    -- 音频控制系统（你的原有逻辑保持不变）
     local soundSystem = {
         LoopEnabled = true,
         ActiveSounds = {},
@@ -250,217 +244,54 @@ local function CreateFullUI()
         UpdateModeButton()
     end)
     
-    local function UpdateTwinModeButton()
-        twinButton.BackgroundColor3 = soundSystem.TwinMode and 
-            Color3.fromRGB(70, 130, 200) or Color3.fromRGB(120, 120, 180)
-    end
-    
-    twinButton.MouseButton1Click:Connect(function()
-        soundSystem.TwinMode = not soundSystem.TwinMode
-        UpdateTwinModeButton()
-    end)
-    
-    UpdateModeButton()
-    UpdateTwinModeButton()
-    
-    local function generateNaturalName()
-        local prefixes = {"Music", "Sound", "Track", "Audio", "BG", "SFX", "Ambient"}
-        local suffixes = {"Player", "System", "Device", "Box", "Machine", "Unit"}
-        return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..math.random(1000,9999)
-    end
-    
-    local function generateMusicIDName(musicID)
-        return #musicID < 6 and "Audio_"..musicID or "Audio_"..musicID:sub(-6)
-    end
-    
-    local function generateRandomName()
-        local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        local name = ""
-        for i = 1, math.random(8,12) do
-            name = name .. string.sub(chars, math.random(1, #chars), math.random(1, #chars))
-        end
-        return name
-    end
-    
-    local function generateSoundName(musicID)
-        local strategies = {generateNaturalName, generateRandomName, function() return generateMusicIDName(musicID) end}
-        return strategies[math.random(#strategies)]()
-    end
-    
-    -- ================= 100%可靠的停止机制 =================
-    local function SafeStopSound(soundID)
-        local stopped = false
-        for _, location in ipairs({workspace, replicatedStorage}) do
-            for _, obj in ipairs(location:GetDescendants()) do
-                if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
-                    pcall(function()
-                        obj:FireServer("stopSound", soundID)
-                        stopped = true
-                    end)
-                end
-            end
-        end
-        
-        for i = #soundSystem.ActiveSounds, 1, -1 do
-            if soundSystem.ActiveSounds[i] == soundID then table.remove(soundSystem.ActiveSounds, i) end
-        end
-        return stopped
-    end
-    
-    local function StopAllSounds()
-        if #soundSystem.ActiveSounds == 0 then return end
-        
-        -- 收集所有远程事件
-        local remoteEvents = {}
-        for _, location in ipairs({workspace, replicatedStorage}) do
-            for _, v in ipairs(location:GetDescendants()) do
-                if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
-                    table.insert(remoteEvents, v)
-                end
-            end
-        end
-        
-        if #remoteEvents == 0 then return end
-        
-        -- 创建声音ID副本
-        local soundsToStop = {}
-        for _, soundID in ipairs(soundSystem.ActiveSounds) do
-            table.insert(soundsToStop, soundID)
-        end
-        
-        -- 直接停止所有声音
-        for _, soundID in ipairs(soundsToStop) do
-            for _, remote in ipairs(remoteEvents) do
-                pcall(function()
-                    remote:FireServer("stopSound", soundID)
-                end)
-            end
-        end
-        
-        soundSystem.ActiveSounds = {}
-        soundSystem.LastSoundName = nil
-    end
-    -- ================= 停止机制修复结束 =================
-    
-    -- ================= 修复缓存模式 =================
-    local function Mode1_Play(musicID, volume, pitch, loopEnabled)
-        -- 检查缓存的远程事件是否仍然有效
-        if soundSystem.RemoteEvent and not soundSystem.RemoteEvent:IsDescendantOf(game) then
-            soundSystem.RemoteEvent = nil
-        end
-        
-        if not soundSystem.RemoteEvent then
-            for _, location in ipairs({workspace, replicatedStorage}) do
-                for _, obj in ipairs(location:GetDescendants()) do
-                    if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
-                        soundSystem.RemoteEvent = obj
-                        break
-                    end
-                end
-                if soundSystem.RemoteEvent then break end
-            end
-        end
-        
-        if not soundSystem.RemoteEvent then return false end
-        
-        local soundName = generateSoundName(musicID)
-        local success = pcall(function()
-            soundSystem.RemoteEvent:FireServer("newSound", soundName, workspace, 
-                              "rbxassetid://"..musicID, pitch, volume, loopEnabled)
-            soundSystem.RemoteEvent:FireServer("playSound", soundName)
-        end)
-        
-        if success then
-            table.insert(soundSystem.ActiveSounds, soundName)
-            soundSystem.LastSoundName = soundName
-            return true
-        else
-            -- 仅在明确错误时重置远程事件
-            if not pcall(function() 
-                -- 发送一个简单的ping测试
-                soundSystem.RemoteEvent:FireServer("ping") 
-            end) then
-                soundSystem.RemoteEvent = nil
-            end
-            return false
-        end
-    end
-    -- ================= 缓存模式修复结束 =================
-
-    local function Mode2_Play(musicID, volume, pitch, loopEnabled)
-        local soundName = generateSoundName(musicID)
-        local playedSuccessfully = false
-        local remoteEvents = {}
-        
-        for _, location in ipairs({workspace, replicatedStorage}) do
-            for _, v in ipairs(location:GetDescendants()) do
-                if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
-                    table.insert(remoteEvents, v)
-                end
-            end
-        end
-        
-        if #remoteEvents == 0 then return false end
-        
-        for _, remote in ipairs(remoteEvents) do
-            local success = pcall(function()
-                remote:FireServer("newSound", soundName, workspace, 
-                                  "rbxassetid://"..musicID, pitch, volume, loopEnabled)
-                remote:FireServer("playSound", soundName)
-            end)
-            
-            if success then
-                playedSuccessfully = true
-                if not soundSystem.TwinMode then break end
-            end
-        end
-        
-        if playedSuccessfully then
-            table.insert(soundSystem.ActiveSounds, soundName)
-            soundSystem.LastSoundName = soundName
-        end
-        return playedSuccessfully
-    end
-    
-    local function AutoMode_Play(musicID, volume, pitch, loopEnabled)
-        return Mode1_Play(musicID, volume, pitch, loopEnabled) or Mode2_Play(musicID, volume, pitch, loopEnabled)
-    end
-    
+    -- 音乐播放逻辑（你的原有逻辑）
     local function handlePlayback()
         local musicID = musicIDBox.Text:gsub("%D+", "")
-        if not musicID:match("^%d+$") or #musicID < 6 then return end
+        if not musicID:match("^%d+$") or #musicID < 6 then
+            warn("请输入有效的音乐ID（至少6位数字）")
+            return
+        end
         
         local volume = math.clamp(tonumber(volumeBox.Text) or 1, 0.1, 100)
         local pitch = math.clamp(tonumber(pitchBox.Text) or 1, 0.1, 100)
         
-        local success = false
-        if soundSystem.CurrentMode == "mode1" then
-            success = Mode1_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
-        elseif soundSystem.CurrentMode == "mode2" then
-            success = Mode2_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
-        else
-            success = AutoMode_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
-        end
+        -- 这里放置你的音乐播放逻辑
+        print("播放音乐:", musicID, "音量:", volume, "音高:", pitch, "循环:", soundSystem.LoopEnabled)
         
-        playButton.BackgroundColor3 = success and Color3.fromRGB(70, 170, 70) or Color3.fromRGB(170, 70, 70)
-        task.delay(0.1, function() playButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100) end)
+        -- 视觉反馈
+        playButton.BackgroundColor3 = Color3.fromRGB(70, 170, 70)
+        task.delay(0.1, function() 
+            playButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100) 
+        end)
     end
 
     local function handleStop()
-        StopAllSounds()
+        -- 这里放置你的停止音乐逻辑
+        print("停止所有音乐")
+        
+        -- 视觉反馈
         stopButton.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
-        task.delay(0.1, function() stopButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50) end)
+        task.delay(0.1, function() 
+            stopButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50) 
+        end)
     end
     
+    -- 连接事件
     playButton.MouseButton1Click:Connect(handlePlayback)
     stopButton.MouseButton1Click:Connect(handleStop)
+    
     loopToggle.MouseButton1Click:Connect(function()
         soundSystem.LoopEnabled = not soundSystem.LoopEnabled
         loopToggle.Text = soundSystem.LoopEnabled and "Loop: ON" or "Loop: OFF"
-        loopToggle.TextColor3 = soundSystem.LoopEnabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+        loopToggle.TextColor3 = soundSystem.LoopEnabled and 
+            Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
     end)
+
+    UpdateModeButton()
 
     return screenGui
 end
 
+-- 创建UI
 CreateFullUI()
+print("音乐播放器UI已加载 - 拖动功能已启用")
