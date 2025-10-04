@@ -4,6 +4,14 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
+-- 添加圆角效果的函数
+local function ApplyRoundedCorners(uiElement, cornerRadius)
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, cornerRadius or 8)
+    uiCorner.Parent = uiElement
+    return uiCorner
+end
+
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "TouchUi"..math.random(1000,9999)
@@ -18,11 +26,19 @@ local function CreateFullUI()
     mainFrame.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
+    
+    -- 为主框架添加圆角
+    ApplyRoundedCorners(mainFrame, 12)
 
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
     titleBar.Parent = mainFrame
+    
+    -- 为标题栏添加圆角（仅顶部圆角）
+    local titleBarCorner = ApplyRoundedCorners(titleBar, 12)
+    -- 模拟仅顶部圆角效果
+    titleBar.Size = UDim2.new(1, 0, 0, 32) -- 稍微增加高度以容纳圆角
 
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -60, 1, 0)
@@ -47,6 +63,9 @@ local function CreateFullUI()
     closeButton.BorderSizePixel = 0
     closeButton.Parent = titleBar
     closeButton.MouseButton1Click:Connect(function() screenGui:Destroy() end)
+    
+    -- 为关闭按钮添加圆角
+    ApplyRoundedCorners(closeButton, 6)
 
     local twinButton = Instance.new("TextButton")
     twinButton.Size = UDim2.new(0, 25, 0, 25)
@@ -59,8 +78,11 @@ local function CreateFullUI()
     twinButton.BackgroundColor3 = Color3.fromRGB(120, 120, 200)
     twinButton.BorderSizePixel = 0
     twinButton.Parent = titleBar
+    
+    -- 为Twin按钮添加圆角
+    ApplyRoundedCorners(twinButton, 6)
 
-    -- 输入框创建函数
+    -- 输入框创建函数（已添加圆角）
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local box = Instance.new("TextBox")
         box.Size = UDim2.new(sizeX, 0, 0, 25)
@@ -71,6 +93,10 @@ local function CreateFullUI()
         box.Font = Enum.Font.SourceSans
         box.TextSize = 14
         box.Parent = mainFrame
+        
+        -- 为输入框添加圆角
+        ApplyRoundedCorners(box, 6)
+        
         return box
     end
 
@@ -78,7 +104,7 @@ local function CreateFullUI()
     local volumeBox = CreateInputBox(0.4, "[Volume] (0.1-100)", 0.4, 0.05)
     local pitchBox = CreateInputBox(0.4, "[Pitch] (0.1-100)", 0.4, 0.55)
 
-    -- 按钮创建函数
+    -- 按钮创建函数（已添加圆角）
     local function CreateButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 30)
@@ -89,13 +115,17 @@ local function CreateFullUI()
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.BackgroundColor3 = color
         btn.Parent = mainFrame
+        
+        -- 为按钮添加圆角
+        ApplyRoundedCorners(btn, 8)
+        
         return btn
     end
 
     local playButton = CreateButton("Play", 0.05, 0.65, 0.4, Color3.fromRGB(100, 100, 100))
     local stopButton = CreateButton("Stop", 0.55, 0.65, 0.4, Color3.fromRGB(150, 50, 50))
 
-    -- 切换按钮创建函数
+    -- 切换按钮创建函数（已添加圆角）
     local function CreateToggleButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 25)
@@ -105,6 +135,10 @@ local function CreateFullUI()
         btn.TextSize = 12
         btn.BackgroundColor3 = color
         btn.Parent = mainFrame
+        
+        -- 为切换按钮添加圆角
+        ApplyRoundedCorners(btn, 6)
+        
         return btn
     end
 
@@ -114,6 +148,7 @@ local function CreateFullUI()
 
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
 
+    -- 其余代码保持不变...
     local soundSystem = {
         LoopEnabled = true,
         ActiveSounds = {},
