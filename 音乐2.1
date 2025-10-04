@@ -4,13 +4,68 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
--- 添加圆角效果的函数
-local function ApplyRoundedCorners(uiElement, cornerRadius)
-    local uiCorner = Instance.new("UICorner")
-    uiCorner.CornerRadius = UDim.new(0, cornerRadius or 8)
-    uiCorner.Parent = uiElement
-    return uiCorner
+-- ================== 新增：增强型拖动处理器 ==================
+local function CreateEnhancedDragHandler(draggableFrame, handleArea)
+    local dragActive = false
+    local dragStart = Vector2.new()
+    local frameStart = UDim2.new()
+    
+    -- 通用的输入开始处理
+    local function onInputBegan(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            
+            dragActive = true
+            dragStart = input.Position
+            frameStart = draggableFrame.Position
+            
+            -- 为触摸输入启用捕获，防止拖拽时失去焦点[5](@ref)
+            if input.UserInputType == Enum.UserInputType.Touch then
+                input:Capture()
+            end
+            
+            -- 视觉反馈：拖动开始时轻微改变透明度
+            draggableFrame.BackgroundTransparency = 0.1
+        end
+    end
+    
+    -- 通用的输入改变处理
+    local function onInputChanged(input)
+        if dragActive then
+            local currentPos = input.UserInputType == Enum.UserInputType.Touch and 
+                             input.Position or userInput:GetMouseLocation()
+            local delta = currentPos - dragStart
+            
+            -- 平滑更新位置，无边界限制[5](@ref)
+            draggableFrame.Position = UDim2.new(
+                frameStart.X.Scale, frameStart.X.Offset + delta.X,
+                frameStart.Y.Scale, frameStart.Y.Offset + delta.Y
+            )
+        end
+    end
+    
+    -- 通用的输入结束处理
+    local function onInputEnded(input)
+        if dragActive then
+            dragActive = false
+            -- 恢复透明度
+            draggableFrame.BackgroundTransparency = 0
+        end
+    end
+    
+    -- 将事件连接到指定的拖动手柄区域[4](@ref)
+    handleArea.InputBegan:Connect(onInputBegan)
+    handleArea.InputChanged:Connect(onInputChanged)
+    handleArea.InputEnded:Connect(onInputEnded)
+    
+    -- 返回一个控制接口，以便需要时扩展
+    return {
+        SetEnabled = function(enabled)
+            dragActive = enabled and dragActive
+        end
+    }
 end
+-- ================== 增强型拖动处理器结束 ==================
 
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
@@ -26,9 +81,11 @@ local function CreateFullUI()
     mainFrame.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
-    
+
     -- 为主框架添加圆角
-    ApplyRoundedCorners(mainFrame, 12)
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = UDim.new(0, 12)
+    mainCorner.Parent = mainFrame
 
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, 0, 0, 30)
@@ -36,16 +93,16 @@ local function CreateFullUI()
     titleBar.Parent = mainFrame
     
     -- 为标题栏添加圆角（仅顶部圆角）
-    local titleBarCorner = ApplyRoundedCorners(titleBar, 12)
-    -- 模拟仅顶部圆角效果
-    titleBar.Size = UDim2.new(1, 0, 0, 32) -- 稍微增加高度以容纳圆角
+    local titleBarCorner = Instance.new("UICorner")
+    titleBarCorner.CornerRadius = UDim.new(0, 12)
+    titleBarCorner.Parent = titleBar
 
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -60, 1, 0)
     titleLabel.Position = UDim2.new(0, 5, 0, 0)
     titleLabel.Text = "MUSIC PLAYER ♪♪[made by余客]"
     titleLabel.TextColor3 = Color3.fromRGB(50, 50, 50)
-    titleLabel.TextSize = 15
+    titleLabel.TextSize = 18
     titleLabel.Font = Enum.Font.SourceSansBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.BackgroundTransparency = 1
@@ -62,10 +119,15 @@ local function CreateFullUI()
     closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     closeButton.BorderSizePixel = 0
     closeButton.Parent = titleBar
-    closeButton.MouseButton1Click:Connect(function() screenGui:Destroy() end)
     
     -- 为关闭按钮添加圆角
-    ApplyRoundedCorners(closeButton, 6)
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, 6)
+    closeCorner.Parent = closeButton
+    
+    closeButton.MouseButton1Click:Connect(function()
+        screenGui:Destroy()
+    end)
 
     local twinButton = Instance.new("TextButton")
     twinButton.Size = UDim2.new(0, 25, 0, 25)
@@ -80,9 +142,11 @@ local function CreateFullUI()
     twinButton.Parent = titleBar
     
     -- 为Twin按钮添加圆角
-    ApplyRoundedCorners(twinButton, 6)
+    local twinCorner = Instance.new("UICorner")
+    twinCorner.CornerRadius = UDim.new(0, 6)
+    twinCorner.Parent = twinButton
 
-    -- 输入框创建函数（已添加圆角）
+    -- 输入框创建函数
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local box = Instance.new("TextBox")
         box.Size = UDim2.new(sizeX, 0, 0, 25)
@@ -95,7 +159,9 @@ local function CreateFullUI()
         box.Parent = mainFrame
         
         -- 为输入框添加圆角
-        ApplyRoundedCorners(box, 6)
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = box
         
         return box
     end
@@ -104,7 +170,7 @@ local function CreateFullUI()
     local volumeBox = CreateInputBox(0.4, "[Volume] (0.1-100)", 0.4, 0.05)
     local pitchBox = CreateInputBox(0.4, "[Pitch] (0.1-100)", 0.4, 0.55)
 
-    -- 按钮创建函数（已添加圆角）
+    -- 按钮创建函数
     local function CreateButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 30)
@@ -117,7 +183,9 @@ local function CreateFullUI()
         btn.Parent = mainFrame
         
         -- 为按钮添加圆角
-        ApplyRoundedCorners(btn, 8)
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 8)
+        corner.Parent = btn
         
         return btn
     end
@@ -125,7 +193,7 @@ local function CreateFullUI()
     local playButton = CreateButton("Play", 0.05, 0.65, 0.4, Color3.fromRGB(100, 100, 100))
     local stopButton = CreateButton("Stop", 0.55, 0.65, 0.4, Color3.fromRGB(150, 50, 50))
 
-    -- 切换按钮创建函数（已添加圆角）
+    -- 切换按钮创建函数
     local function CreateToggleButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 25)
@@ -137,7 +205,9 @@ local function CreateFullUI()
         btn.Parent = mainFrame
         
         -- 为切换按钮添加圆角
-        ApplyRoundedCorners(btn, 6)
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = btn
         
         return btn
     end
@@ -148,7 +218,12 @@ local function CreateFullUI()
 
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
 
-    -- 其余代码保持不变...
+    -- ================== 应用增强型拖动处理器 ==================
+    -- 将标题栏设置为拖动手柄
+    local dragHandler = CreateEnhancedDragHandler(mainFrame, titleBar)
+    -- ================== 拖动集成结束 ==================
+
+    -- 音频控制器
     local soundSystem = {
         LoopEnabled = true,
         ActiveSounds = {},
@@ -384,26 +459,6 @@ local function CreateFullUI()
         loopToggle.Text = soundSystem.LoopEnabled and "Loop: ON" or "Loop: OFF"
         loopToggle.TextColor3 = soundSystem.LoopEnabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
     end)
-
-    local dragActive, dragStart, frameStart = false, Vector2.new(), UDim2.new()
-
-    mainFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragActive = true
-            dragStart = input.Position
-            frameStart = mainFrame.Position
-        end
-    end)
-
-    mainFrame.InputChanged:Connect(function(input)
-        if dragActive then
-            local currentPos = input.UserInputType == Enum.UserInputType.Touch and input.Position or userInput:GetMouseLocation()
-            local delta = currentPos - dragStart
-            mainFrame.Position = UDim2.new(frameStart.X.Scale, frameStart.X.Offset + delta.X, frameStart.Y.Scale, frameStart.Y.Offset + delta.Y)
-        end
-    end)
-
-    mainFrame.InputEnded:Connect(function() dragActive = false end)
 
     return screenGui
 end
