@@ -38,7 +38,7 @@ local function CreateFullUI()
     -- 为标题栏添加圆角（仅顶部圆角）
     local titleBarCorner = ApplyRoundedCorners(titleBar, 12)
     -- 模拟仅顶部圆角效果
-    titleBar.Size = UDim2.new(1, 0, 0, 32) -- 稍微增加高度以容纳圆角
+    titleBar.Size = UDim2.new(1, 0, 0, 32)
 
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -60, 1, 0)
@@ -62,10 +62,13 @@ local function CreateFullUI()
     closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     closeButton.BorderSizePixel = 0
     closeButton.Parent = titleBar
-    closeButton.MouseButton1Click:Connect(function() screenGui:Destroy() end)
     
     -- 为关闭按钮添加圆角
     ApplyRoundedCorners(closeButton, 6)
+    
+    closeButton.MouseButton1Click:Connect(function()
+        screenGui:Destroy()
+    end)
 
     local twinButton = Instance.new("TextButton")
     twinButton.Size = UDim2.new(0, 25, 0, 25)
@@ -82,7 +85,7 @@ local function CreateFullUI()
     -- 为Twin按钮添加圆角
     ApplyRoundedCorners(twinButton, 6)
 
-    -- 输入框创建函数（已添加圆角）
+    -- 输入框创建函数
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local box = Instance.new("TextBox")
         box.Size = UDim2.new(sizeX, 0, 0, 25)
@@ -104,7 +107,7 @@ local function CreateFullUI()
     local volumeBox = CreateInputBox(0.4, "[Volume] (0.1-100)", 0.4, 0.05)
     local pitchBox = CreateInputBox(0.4, "[Pitch] (0.1-100)", 0.4, 0.55)
 
-    -- 按钮创建函数（已添加圆角）
+    -- 按钮创建函数
     local function CreateButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 30)
@@ -125,7 +128,7 @@ local function CreateFullUI()
     local playButton = CreateButton("Play", 0.05, 0.65, 0.4, Color3.fromRGB(100, 100, 100))
     local stopButton = CreateButton("Stop", 0.55, 0.65, 0.4, Color3.fromRGB(150, 50, 50))
 
-    -- 切换按钮创建函数（已添加圆角）
+    -- 切换按钮创建函数
     local function CreateToggleButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 25)
@@ -148,7 +151,7 @@ local function CreateFullUI()
 
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
 
-    -- 音频控制器
+    -- 音频控制系统
     local soundSystem = {
         LoopEnabled = true,
         ActiveSounds = {},
@@ -212,7 +215,7 @@ local function CreateFullUI()
         return strategies[math.random(#strategies)]()
     end
     
-    -- ================= 100%可靠的停止机制 =================
+    -- ================= 可靠的停止机制 =================
     local function SafeStopSound(soundID)
         local stopped = false
         for _, location in ipairs({workspace, replicatedStorage}) do
@@ -265,7 +268,6 @@ local function CreateFullUI()
         soundSystem.ActiveSounds = {}
         soundSystem.LastSoundName = nil
     end
-    -- ================= 停止机制修复结束 =================
     
     -- ================= 修复缓存模式 =================
     local function Mode1_Play(musicID, volume, pitch, loopEnabled)
@@ -302,7 +304,6 @@ local function CreateFullUI()
         else
             -- 仅在明确错误时重置远程事件
             if not pcall(function() 
-                -- 发送一个简单的ping测试
                 soundSystem.RemoteEvent:FireServer("ping") 
             end) then
                 soundSystem.RemoteEvent = nil
@@ -310,7 +311,6 @@ local function CreateFullUI()
             return false
         end
     end
-    -- ================= 缓存模式修复结束 =================
 
     local function Mode2_Play(musicID, volume, pitch, loopEnabled)
         local soundName = generateSoundName(musicID)
@@ -385,56 +385,93 @@ local function CreateFullUI()
         loopToggle.TextColor3 = soundSystem.LoopEnabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
     end)
 
-    -- ================= 修复的拖动系统 =================
+    -- ================= 增强的拖动系统 =================
     local dragActive = false
     local dragStart = Vector2.new()
     local frameStart = UDim2.new()
-
-    -- 只在标题栏上启用拖动，避免其他元素干扰
-    titleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
+    
+    -- 创建背景拖动区域（覆盖整个主框架但排除交互元素）
+    local dragBackground = Instance.new("Frame")
+    dragBackground.Size = UDim2.new(1, 0, 1, 0)
+    dragBackground.BackgroundTransparency = 1  -- 完全透明
+    dragBackground.ZIndex = 0  -- 确保在底层
+    dragBackground.Parent = mainFrame
+    
+    -- 检查元素是否可交互的函数
+    local function isInteractiveElement(element)
+        return element:IsA("TextButton") or element:IsA("TextBox") or element:IsA("ImageButton")
+    end
+    
+    -- 检查点击位置是否在交互元素上
+    local function isClickOnInteractiveElement(inputPosition)
+        local interactiveElements = {
+            closeButton, twinButton, musicIDBox, volumeBox, pitchBox, 
+            playButton, stopButton, loopToggle, modeButton
+        }
+        
+        for _, element in ipairs(interactiveElements) do
+            -- 简单的边界检查（实际项目中可能需要更精确的碰撞检测）
+            local elementPos = element.AbsolutePosition
+            local elementSize = element.AbsoluteSize
             
-            dragActive = true
-            dragStart = input.Position
-            frameStart = mainFrame.Position
-            
-            -- 关键修复：捕获输入事件，防止视角移动
-            input:Capture()
-            
-            -- 视觉反馈：拖动开始时轻微改变透明度
-            mainFrame.BackgroundTransparency = 0.1
-        end
-    end)
-
-    titleBar.InputChanged:Connect(function(input)
-        if dragActive then
-            -- 更精确的位置计算，确保跟手
-            local currentPos
-            if input.UserInputType == Enum.UserInputType.Touch then
-                currentPos = input.Position
-            else
-                currentPos = userInput:GetMouseLocation()
+            if inputPosition.X >= elementPos.X and inputPosition.X <= elementPos.X + elementSize.X and
+               inputPosition.Y >= elementPos.Y and inputPosition.Y <= elementPos.Y + elementSize.Y then
+                return true
             end
-            
-            local delta = currentPos - dragStart
-            
-            -- 实时更新位置，确保流畅拖动
-            mainFrame.Position = UDim2.new(
-                frameStart.X.Scale, frameStart.X.Offset + delta.X,
-                frameStart.Y.Scale, frameStart.Y.Offset + delta.Y
-            )
         end
-    end)
+        return false
+    end
 
-    titleBar.InputEnded:Connect(function(input)
-        if dragActive then
-            dragActive = false
-            -- 恢复透明度
-            mainFrame.BackgroundTransparency = 0
-        end
-    end)
-    -- ================= 拖动系统修复结束 =================
+    -- 在主框架上设置拖动（但排除交互元素区域）
+    local function setupDragOnFrame(frame)
+        frame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+               input.UserInputType == Enum.UserInputType.Touch then
+                
+                -- 检查是否点击在交互元素上
+                if isClickOnInteractiveElement(input.Position) then
+                    return  -- 如果是交互元素，不启动拖动
+                end
+                
+                dragActive = true
+                dragStart = input.Position
+                frameStart = mainFrame.Position
+                
+                -- 为触摸输入启用捕获
+                if input.UserInputType == Enum.UserInputType.Touch then
+                    input:Capture()
+                end
+                
+                -- 视觉反馈
+                mainFrame.BackgroundTransparency = 0.1
+            end
+        end)
+        
+        frame.InputChanged:Connect(function(input)
+            if dragActive then
+                local currentPos = input.UserInputType == Enum.UserInputType.Touch and 
+                                 input.Position or userInput:GetMouseLocation()
+                local delta = currentPos - dragStart
+                
+                mainFrame.Position = UDim2.new(
+                    frameStart.X.Scale, frameStart.X.Offset + delta.X,
+                    frameStart.Y.Scale, frameStart.Y.Offset + delta.Y
+                )
+            end
+        end)
+        
+        frame.InputEnded:Connect(function(input)
+            if dragActive then
+                dragActive = false
+                mainFrame.BackgroundTransparency = 0
+            end
+        end)
+    end
+
+    -- 为标题栏和背景都设置拖动
+    setupDragOnFrame(titleBar)
+    setupDragOnFrame(dragBackground)
+    -- ================= 拖动系统结束 =================
 
     return screenGui
 end
