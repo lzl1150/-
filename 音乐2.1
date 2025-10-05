@@ -1,6 +1,7 @@
 local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
+local tweenService = game:GetService("TweenService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -27,12 +28,24 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
     
-    -- ==================== 关键修改：隐藏拖动圆环 ====================
+    -- ==================== 关键修复：隐藏拖动圆环 ====================
     mainFrame.Active = true
-    -- 创建空的SelectionImageObject来隐藏默认拖动圆环
-    local emptySelectionImage = Instance.new("ImageLabel")
-    emptySelectionImage.Image = ""
-    mainFrame.SelectionImageObject = emptySelectionImage
+    -- 创建完全透明的拖动反馈图像来隐藏默认圆环[7,8](@ref)
+    local transparentDragImage = Instance.new("ImageLabel")
+    transparentDragImage.Image = ""
+    transparentDragImage.Size = UDim2.new(0, 1, 0, 1)
+    transparentDragImage.BackgroundTransparency = 1
+    transparentDragImage.Parent = mainFrame
+    
+    -- 使用UIDragDetector并设置透明拖动图像[6](@ref)
+    local dragDetector = Instance.new("UIDragDetector")
+    dragDetector.Parent = mainFrame
+    
+    -- 在拖动开始时设置透明反馈
+    dragDetector.DragStarted:Connect(function()
+        -- 使用setDragImage方法设置完全透明的图像[7](@ref)
+        dragDetector:SetDragImage(transparentDragImage, -999, -999)
+    end)
     -- ===================================================================
     
     ApplyRoundedCorners(mainFrame, 12)
@@ -41,14 +54,6 @@ local function CreateFullUI()
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
     titleBar.Parent = mainFrame
-    
-    -- ==================== 关键修改：标题栏也隐藏拖动圆环 ====================
-    titleBar.Active = true
-    local emptySelectionImageTitle = Instance.new("ImageLabel")
-    emptySelectionImageTitle.Image = ""
-    titleBar.SelectionImageObject = emptySelectionImageTitle
-    -- =========================================================================
-    
     ApplyRoundedCorners(titleBar, 12)
 
     local titleLabel = Instance.new("TextLabel")
@@ -148,6 +153,54 @@ local function CreateFullUI()
     loopToggle.TextColor3 = Color3.fromRGB(0, 200, 0)
 
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
+
+    -- ==================== 触摸半透明效果系统 ====================
+    local originalBackgroundColor = mainFrame.BackgroundColor3
+    local isBeingTouched = false
+    
+    local function StartTouchFeedback()
+        if isBeingTouched then return end
+        isBeingTouched = true
+        
+        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local transparencyTween = tweenService:Create(
+            mainFrame,
+            tweenInfo,
+            {BackgroundColor3 = Color3.fromRGB(200, 200, 200)}
+        )
+        transparencyTween:Play()
+    end
+    
+    local function EndTouchFeedback()
+        if not isBeingTouched then return end
+        isBeingTouched = false
+        
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local restoreTween = tweenService:Create(
+            mainFrame,
+            tweenInfo,
+            {BackgroundColor3 = originalBackgroundColor}
+        )
+        restoreTween:Play()
+    end
+    
+    userInputService.TouchStarted:Connect(function(input, processed)
+        if processed then return end
+        
+        local touchPos = input.Position
+        local mainFramePos = mainFrame.AbsolutePosition
+        local mainFrameSize = mainFrame.AbsoluteSize
+        
+        if touchPos.X >= mainFramePos.X and touchPos.X <= mainFramePos.X + mainFrameSize.X and
+           touchPos.Y >= mainFramePos.Y and touchPos.Y <= mainFramePos.Y + mainFrameSize.Y then
+            StartTouchFeedback()
+        end
+    end)
+    
+    userInputService.TouchEnded:Connect(function(input, processed)
+        EndTouchFeedback()
+    end)
+    -- ==================== 触摸效果系统完成 ====================
 
     -- 音频控制系统
     local soundSystem = {
@@ -357,4 +410,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 拖动圆环已隐藏")
+print("音乐播放器UI已加载 - 拖动圆环已隐藏，触摸半透明效果已启用")
