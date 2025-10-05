@@ -1,7 +1,36 @@
 local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local 
+local tweenService = game:GetService("TweenService")
+
+if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
+
+-- 添加圆角效果的函数
+local function ApplyRoundedCorners(uiElement, cornerRadius)
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, cornerRadius or 8)
+    uiCorner.Parent = uiElement
+    return uiCorner
+end
+
+local function CreateFullUI()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "MusicPlayerUI_"..math.random(1000,9999)
+    screenGui.ResetOnSpawn = false
+    screenGui.DisplayOrder = 999
+    screenGui.Parent = player.PlayerGui
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 300, 0, 200)
+    mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+    mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
+    mainFrame.BorderSizePixel = 1
+    mainFrame.Parent = screenGui
+    
+    -- ==================== 关键修复：使用参考脚本的拖动设置 ====================
+    mainFrame.Active = true
+    
     -- 创建完全透明的拖动图像（参考脚本的核心方法）
     local transparentDragImage = Instance.new("ImageLabel")
     transparentDragImage.Image = "" -- 空图像
