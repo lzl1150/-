@@ -1,8 +1,6 @@
 local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local tweenService = game:GetService("TweenService")
-local runService = game:GetService("RunService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -29,9 +27,9 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
     
-    -- ==================== 关键修复1：隐藏拖动反馈圆环 ====================
+    -- ==================== 关键修改：隐藏拖动圆环 ====================
     mainFrame.Active = true
-    -- 创建空的选择图像对象来隐藏默认拖动圆环
+    -- 创建空的SelectionImageObject来隐藏默认拖动圆环
     local emptySelectionImage = Instance.new("ImageLabel")
     emptySelectionImage.Image = ""
     mainFrame.SelectionImageObject = emptySelectionImage
@@ -44,7 +42,7 @@ local function CreateFullUI()
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
     titleBar.Parent = mainFrame
     
-    -- ==================== 关键修复2：标题栏也隐藏拖动反馈 ====================
+    -- ==================== 关键修改：标题栏也隐藏拖动圆环 ====================
     titleBar.Active = true
     local emptySelectionImageTitle = Instance.new("ImageLabel")
     emptySelectionImageTitle.Image = ""
@@ -93,69 +91,6 @@ local function CreateFullUI()
     twinButton.BorderSizePixel = 0
     twinButton.Parent = titleBar
     ApplyRoundedCorners(twinButton, 6)
-
-    -- ==================== 关键修复3：添加触摸半透明效果 ====================
-    local originalBackgroundColor = mainFrame.BackgroundColor3
-    local isBeingTouched = false
-    
-    -- 创建触摸反馈函数
-    local function StartTouchFeedback()
-        if isBeingTouched then return end
-        isBeingTouched = true
-        
-        -- 使用TweenService创建平滑的半透明效果
-        local tweenInfo = TweenInfo.new(
-            0.2, -- 动画时长
-            Enum.EasingStyle.Quad, -- 缓动样式
-            Enum.EasingDirection.Out -- 缓动方向
-        )
-        
-        local transparencyTween = tweenService:Create(
-            mainFrame,
-            tweenInfo,
-            {BackgroundColor3 = Color3.fromRGB(200, 200, 200)} -- 变暗效果
-        )
-        transparencyTween:Play()
-    end
-    
-    local function EndTouchFeedback()
-        if not isBeingTouched then return end
-        isBeingTouched = false
-        
-        -- 恢复原始颜色
-        local tweenInfo = TweenInfo.new(
-            0.3, -- 稍长的恢复时间
-            Enum.EasingStyle.Quad,
-            Enum.EasingDirection.Out
-        )
-        
-        local restoreTween = tweenService:Create(
-            mainFrame,
-            tweenInfo,
-            {BackgroundColor3 = originalBackgroundColor}
-        )
-        restoreTween:Play()
-    end
-    
-    -- 监听触摸输入事件
-    userInputService.TouchStarted:Connect(function(input, processed)
-        if processed then return end
-        
-        -- 检查是否点击在UI上
-        local touchPos = input.Position
-        local mainFramePos = mainFrame.AbsolutePosition
-        local mainFrameSize = mainFrame.AbsoluteSize
-        
-        if touchPos.X >= mainFramePos.X and touchPos.X <= mainFramePos.X + mainFrameSize.X and
-           touchPos.Y >= mainFramePos.Y and touchPos.Y <= mainFramePos.Y + mainFrameSize.Y then
-            StartTouchFeedback()
-        end
-    end)
-    
-    userInputService.TouchEnded:Connect(function(input, processed)
-        EndTouchFeedback()
-    end)
-    -- ==================== 触摸反馈系统添加完成 ====================
 
     -- 输入框创建函数
     local function CreateInputBox(posY, placeholder, sizeX, posX)
@@ -422,4 +357,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 拖动圆环已隐藏，触摸半透明效果已启用")
+print("音乐播放器UI已加载 - 拖动圆环已隐藏")
