@@ -1,6 +1,7 @@
 local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
+local tweenService = game:GetService("TweenService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -27,9 +28,10 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
     
-    -- ==================== 关键修复1：只在主框架启用拖动 ====================
+    -- ==================== 关键修复1：隐藏拖动反馈 ====================
     mainFrame.Active = true
-    Instance.new("UIDragDetector", mainFrame) -- 拖动控制器只加在主框架上
+    mainFrame.SelectionImageObject = Instance.new("ImageLabel") -- 创建空图像标签来隐藏默认拖动反馈
+    mainFrame.SelectionImageObject.Image = "" -- 设置为空图像，彻底隐藏拖动圆环
     -- ===================================================================
     
     ApplyRoundedCorners(mainFrame, 12)
@@ -39,10 +41,11 @@ local function CreateFullUI()
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
     titleBar.Parent = mainFrame
     
-    -- ==================== 关键修复2：标题栏不单独设置拖动 ====================
-    -- 移除了 titleBar.Active = true 和标题栏的UIDragDetector
-    -- 标题栏现在只是主框架的一部分，点击标题栏会触发主框架的拖动
-    -- ===================================================================
+    -- ==================== 关键修复2：标题栏也隐藏拖动反馈 ====================
+    titleBar.Active = true
+    titleBar.SelectionImageObject = Instance.new("ImageLabel")
+    titleBar.SelectionImageObject.Image = ""
+    -- =========================================================================
     
     ApplyRoundedCorners(titleBar, 12)
 
@@ -143,6 +146,69 @@ local function CreateFullUI()
     loopToggle.TextColor3 = Color3.fromRGB(0, 200, 0)
 
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
+
+    -- ==================== 关键修复3：添加触摸反馈系统 ====================
+    local originalBackgroundColor = mainFrame.BackgroundColor3
+    local isDragging = false
+    
+    -- 创建触摸反馈函数
+    local function StartTouchFeedback()
+        if isDragging then return end
+        isDragging = true
+        
+        -- 使用TweenService创建平滑的半透明效果 [7](@ref)
+        local tweenInfo = TweenInfo.new(
+            0.2, -- 动画时长
+            Enum.EasingStyle.Quad, -- 缓动样式
+            Enum.EasingDirection.Out -- 缓动方向
+        )
+        
+        local transparencyTween = tweenService:Create(
+            mainFrame,
+            tweenInfo,
+            {BackgroundColor3 = Color3.fromRGB(200, 200, 200)} -- 变暗效果
+        )
+        transparencyTween:Play()
+    end
+    
+    local function EndTouchFeedback()
+        if not isDragging then return end
+        isDragging = false
+        
+        -- 恢复原始颜色
+        local tweenInfo = TweenInfo.new(
+            0.3, -- 稍长的恢复时间
+            Enum.EasingStyle.Quad,
+            Enum.EasingDirection.Out
+        )
+        
+        local restoreTween = tweenService:Create(
+            mainFrame,
+            tweenInfo,
+            {BackgroundColor3 = originalBackgroundColor}
+        )
+        restoreTween:Play()
+    end
+    
+    -- 监听触摸输入事件
+    userInputService.TouchStarted:Connect(function(input, processed)
+        if processed then return end
+        
+        -- 检查是否点击在UI上
+        local touchPos = input.Position
+        local mainFramePos = mainFrame.AbsolutePosition
+        local mainFrameSize = mainFrame.AbsoluteSize
+        
+        if touchPos.X >= mainFramePos.X and touchPos.X <= mainFramePos.X + mainFrameSize.X and
+           touchPos.Y >= mainFramePos.Y and touchPos.Y <= mainFramePos.Y + mainFrameSize.Y then
+            StartTouchFeedback()
+        end
+    end)
+    
+    userInputService.TouchEnded:Connect(function(input, processed)
+        EndTouchFeedback()
+    end)
+    -- ==================== 触摸反馈系统添加完成 ====================
 
     -- 音频控制系统
     local soundSystem = {
@@ -352,4 +418,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 拖动分离问题已修复")
+print("音乐播放器UI已加载 - 拖动反馈隐藏和触摸半透明效果已启用")
