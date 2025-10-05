@@ -31,7 +31,7 @@ local function CreateFullUI()
     -- ==================== 关键修复：使用参考脚本的拖动设置 ====================
     mainFrame.Active = true
     
-    -- 创建完全透明的拖动反馈图像（参考脚本的核心方法）
+    -- 创建完全透明的拖动图像（参考脚本的核心方法）
     local transparentDragImage = Instance.new("ImageLabel")
     transparentDragImage.Image = "" -- 空图像
     transparentDragImage.Size = UDim2.new(0, 1, 0, 1) -- 最小尺寸
@@ -157,6 +157,50 @@ local function CreateFullUI()
     loopToggle.TextColor3 = Color3.fromRGB(0, 200, 0)
 
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
+
+    -- ==================== 修复UI变白问题 ====================
+    local originalBackgroundColor = mainFrame.BackgroundColor3
+    local isBeingTouched = false
+    
+    -- 改进的触摸反馈系统
+    local function StartTouchFeedback()
+        if isBeingTouched then return end
+        isBeingTouched = true
+        
+        -- 使用更温和的变暗效果
+        local tweenInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local transparencyTween = tweenService:Create(
+            mainFrame,
+            tweenInfo,
+            {BackgroundColor3 = Color3.fromRGB(210, 210, 210)}
+        )
+        transparencyTween:Play()
+    end
+    
+    local function EndTouchFeedback()
+        if not isBeingTouched then return end
+        isBeingTouched = false
+        
+        -- 恢复原始颜色
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local restoreTween = tweenService:Create(
+            mainFrame,
+            tweenInfo,
+            {BackgroundColor3 = originalBackgroundColor}
+        )
+        restoreTween:Play()
+    end
+    
+    -- 安全的事件监听
+    userInputService.TouchStarted:Connect(function(input, processed)
+        if processed then return end
+        StartTouchFeedback()
+    end)
+    
+    userInputService.TouchEnded:Connect(function(input, processed)
+        EndTouchFeedback()
+    end)
+    -- ==================== UI变白问题修复完成 ====================
 
     -- 音频控制系统
     local soundSystem = {
@@ -366,4 +410,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 拖动圆环问题已彻底修复")
+print("音乐播放器UI已加载 - 拖动圆环和UI变白问题已彻底修复")
