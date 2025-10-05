@@ -27,8 +27,10 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
     
-    -- 关键修改1：启用活动状态
+    -- ==================== 关键修复1：只在主框架启用拖动 ====================
     mainFrame.Active = true
+    Instance.new("UIDragDetector", mainFrame) -- 拖动控制器只加在主框架上
+    -- ===================================================================
     
     ApplyRoundedCorners(mainFrame, 12)
 
@@ -37,8 +39,10 @@ local function CreateFullUI()
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
     titleBar.Parent = mainFrame
     
-    -- 关键修改2：标题栏也启用活动状态
-    titleBar.Active = true
+    -- ==================== 关键修复2：标题栏不单独设置拖动 ====================
+    -- 移除了 titleBar.Active = true 和标题栏的UIDragDetector
+    -- 标题栏现在只是主框架的一部分，点击标题栏会触发主框架的拖动
+    -- ===================================================================
     
     ApplyRoundedCorners(titleBar, 12)
 
@@ -64,20 +68,11 @@ local function CreateFullUI()
     closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     closeButton.BorderSizePixel = 0
     closeButton.Parent = titleBar
-    
     ApplyRoundedCorners(closeButton, 6)
     
     closeButton.MouseButton1Click:Connect(function()
         screenGui:Destroy()
     end)
-
-    -- ==================== 核心修改：无干扰拖动系统 ====================
-    -- 关键修改3：添加UIDragDetector到主框架
-    Instance.new("UIDragDetector", mainFrame)
-    
-    -- 关键修改4：添加UIDragDetector到标题栏
-    Instance.new("UIDragDetector", titleBar)
-    -- ==================== 拖动系统修改完成 ====================
 
     local twinButton = Instance.new("TextButton")
     twinButton.Size = UDim2.new(0, 25, 0, 25)
@@ -90,7 +85,6 @@ local function CreateFullUI()
     twinButton.BackgroundColor3 = Color3.fromRGB(120, 120, 200)
     twinButton.BorderSizePixel = 0
     twinButton.Parent = titleBar
-    
     ApplyRoundedCorners(twinButton, 6)
 
     -- 输入框创建函数
@@ -104,9 +98,7 @@ local function CreateFullUI()
         box.Font = Enum.Font.SourceSans
         box.TextSize = 14
         box.Parent = mainFrame
-        
         ApplyRoundedCorners(box, 6)
-        
         return box
     end
 
@@ -125,9 +117,7 @@ local function CreateFullUI()
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.BackgroundColor3 = color
         btn.Parent = mainFrame
-        
         ApplyRoundedCorners(btn, 8)
-        
         return btn
     end
 
@@ -144,9 +134,7 @@ local function CreateFullUI()
         btn.TextSize = 12
         btn.BackgroundColor3 = color
         btn.Parent = mainFrame
-        
         ApplyRoundedCorners(btn, 6)
-        
         return btn
     end
 
@@ -364,4 +352,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 无干扰拖动系统已启用")
+print("音乐播放器UI已加载 - 拖动分离问题已修复")
