@@ -1,8 +1,6 @@
 local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local tweenService = game:GetService("TweenService")
-local runService = game:GetService("RunService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -29,25 +27,14 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
     
-    -- ==================== 关键修复1：彻底隐藏拖动圆环 ====================
+    -- ==================== 关键修复：使用参考脚本的拖动设置 ====================
     mainFrame.Active = true
+    Instance.new("UIDragDetector", mainFrame) -- 直接使用参考脚本的方法
     
-    -- 创建完全不可见的拖动图像
-    local invisibleDragImage = Instance.new("ImageLabel")
-    invisibleDragImage.Image = ""
-    invisibleDragImage.Size = UDim2.new(0, 1, 0, 1)
-    invisibleDragImage.BackgroundTransparency = 1
-    invisibleDragImage.Visible = false
-    invisibleDragImage.Parent = mainFrame
-    
-    -- 使用UIDragDetector
-    local dragDetector = Instance.new("UIDragDetector")
-    dragDetector.Parent = mainFrame
-    
-    dragDetector.DragStarted:Connect(function()
-        -- 使用极大负偏移确保拖动图像完全在屏幕外
-        dragDetector:SetDragImage(invisibleDragImage, -9999, -9999)
-    end)
+    -- 添加这个设置来确保拖动时不显示圆环
+    local emptySelectionImage = Instance.new("ImageLabel")
+    emptySelectionImage.Image = ""
+    mainFrame.SelectionImageObject = emptySelectionImage
     -- ===================================================================
     
     ApplyRoundedCorners(mainFrame, 12)
@@ -155,70 +142,6 @@ local function CreateFullUI()
     loopToggle.TextColor3 = Color3.fromRGB(0, 200, 0)
 
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
-
-    -- ==================== 关键修复2：修复UI变白问题 ====================
-    local originalBackgroundColor = mainFrame.BackgroundColor3
-    local isBeingTouched = false
-    
-    -- 改进的触摸反馈系统
-    local function StartTouchFeedback()
-        if isBeingTouched then return end
-        
-        isBeingTouched = true
-        
-        -- 使用更温和的变暗效果
-        local tweenInfo = TweenInfo.new(
-            0.15, -- 更短的动画时间
-            Enum.EasingStyle.Quad, 
-            Enum.EasingDirection.Out
-        )
-        
-        local transparencyTween = tweenService:Create(
-            mainFrame,
-            tweenInfo,
-            {BackgroundColor3 = Color3.fromRGB(210, 210, 210)} -- 轻微的变暗
-        )
-        transparencyTween:Play()
-    end
-    
-    local function EndTouchFeedback()
-        if not isBeingTouched then return end
-        isBeingTouched = false
-        
-        -- 恢复原始颜色
-        local tweenInfo = TweenInfo.new(
-            0.3,
-            Enum.EasingStyle.Quad,
-            Enum.EasingDirection.Out
-        )
-        
-        local restoreTween = tweenService:Create(
-            mainFrame,
-            tweenInfo,
-            {BackgroundColor3 = originalBackgroundColor}
-        )
-        restoreTween:Play()
-    end
-    
-    -- 更精确的触摸事件处理
-    userInputService.TouchStarted:Connect(function(input, processed)
-        if processed then return end
-        
-        local touchPos = input.Position
-        local mainFramePos = mainFrame.AbsolutePosition
-        local mainFrameSize = mainFrame.AbsoluteSize
-        
-        -- 精确检查触摸点是否在UI范围内
-        if touchPos.X >= mainFramePos.X and touchPos.X <= mainFramePos.X + mainFrameSize.X and
-           touchPos.Y >= mainFramePos.Y and touchPos.Y <= mainFramePos.Y + mainFrameSize.Y then
-            StartTouchFeedback()
-        end
-    end)
-    
-    userInputService.TouchEnded:Connect(function(input, processed)
-        EndTouchFeedback()
-    end)
-    -- ==================== UI变白问题修复完成 ====================
 
     -- 音频控制系统
     local soundSystem = {
@@ -428,4 +351,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 拖动圆环和UI变白问题已彻底修复")
+print("音乐播放器UI已加载 - 拖动圆环问题已修复")
