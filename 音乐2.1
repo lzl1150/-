@@ -1,6 +1,7 @@
 local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
+local runService = game:GetService("RunService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -197,7 +198,7 @@ local function CreateFullUI()
         return strategies[math.random(#strategies)]()
     end
     
-    -- ==================== 核心修复：增强版输入处理系统 ====================
+    -- ==================== 修复版拖动系统 ====================
     local dragActive = false
     local dragStart = Vector2.new()
     local frameStart = UDim2.new()
@@ -226,39 +227,39 @@ local function CreateFullUI()
         return false
     end
 
-    -- 增强版输入开始处理
+    -- 修复1：统一的输入开始处理函数
     local function EnhancedInputBegan(input)
         if (input.UserInputType == Enum.UserInputType.MouseButton1 or 
             input.UserInputType == Enum.UserInputType.Touch) and
             not IsClickOnInteractiveElement(input.Position) then
             
-            -- 关键修复1：立即捕获输入
+            -- 修复2：正确的输入捕获
             if input.UserInputType == Enum.UserInputType.Touch then
-                input:Capture()
+                pcall(function() input:Capture() end)
             end
             
-            -- 关键修复2：存储当前输入引用
+            -- 修复3：正确的变量赋值
             currentInput = input
-            
-            -- 关键修复3：锁定鼠标行为（同时适用于触摸）
-            userInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
-            
             dragActive = true
             dragStart = input.Position
             frameStart = mainFrame.Position
             
+            -- 修复4：正确的服务引用
+            pcall(function()
+                userInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+            end)
+            
             -- 视觉反馈
             mainFrame.BackgroundTransparency = 0.05
             
-            -- 关键修复4：阻止事件传播
             return true
         end
         return false
     end
 
-    -- 增强版输入改变处理
+    -- 修复5：统一的输入改变处理函数
     local function EnhancedInputChanged(input)
-        if dragActive and currentInput and (input == currentInput or input.UserInputType == currentInput.UserInputType) then
+        if dragActive then
             local currentPos
             if input.UserInputType == Enum.UserInputType.Touch then
                 currentPos = input.Position
@@ -274,33 +275,34 @@ local function CreateFullUI()
                 frameStart.Y.Scale, frameStart.Y.Offset + delta.Y
             )
             
-            -- 关键修复5：持续捕获触摸输入
+            -- 持续捕获触摸输入
             if input.UserInputType == Enum.UserInputType.Touch then
-                input:Capture()
+                pcall(function() input:Capture() end)
             end
         end
     end
 
-    -- 增强版输入结束处理
+    -- 修复6：统一的输入结束处理函数
     local function EnhancedInputEnded(input)
-        if dragActive and currentInput and (input == currentInput or input.UserInputType == currentInput.UserInputType) then
+        if dragActive then
             dragActive = false
             currentInput = nil
             
-            -- 关键修复6：恢复鼠标行为
-            userInputService.MouseBehavior = Enum.MouseBehavior.Default
+            pcall(function()
+                userInputService.MouseBehavior = Enum.MouseBehavior.Default
+            end)
             
             -- 恢复视觉外观
             mainFrame.BackgroundTransparency = 0
             
             -- 释放输入捕获
             if input.UserInputType == Enum.UserInputType.Touch then
-                input:Capture()
+                pcall(function() input:Capture() end)
             end
         end
     end
 
-    -- 设置增强版拖动处理器
+    -- 修复7：设置拖动处理器
     local function SetupEnhancedDragging(dragHandle)
         dragHandle.InputBegan:Connect(EnhancedInputBegan)
         dragHandle.InputChanged:Connect(EnhancedInputChanged)
@@ -311,17 +313,16 @@ local function CreateFullUI()
     SetupEnhancedDragging(titleBar)
     SetupEnhancedDragging(dragBackground)
     
-    -- 关键修复7：添加全局输入监控作为备用方案
+    -- 修复8：简化全局输入监控
     userInputService.InputBegan:Connect(function(input)
         if dragActive and (input.UserInputType == Enum.UserInputType.MouseButton1 or 
                            input.UserInputType == Enum.UserInputType.Touch) then
-            -- 确保在拖动期间的其他输入也被正确处理
             if input.UserInputType == Enum.UserInputType.Touch then
-                input:Capture()
+                pcall(function() input:Capture() end)
             end
         end
     end)
-    -- ==================== 输入处理系统修复结束 ====================
+    -- ==================== 拖动系统修复完成 ====================
 
     -- 音乐控制逻辑（保持不变）
     local function SafeStopSound(soundID)
@@ -468,4 +469,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 增强版输入处理系统已启用")
+print("音乐播放器UI已加载 - 拖动系统修复完成")
