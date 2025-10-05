@@ -1,6 +1,7 @@
 local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
+local tweenService = game:GetService("TweenService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -27,9 +28,28 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
     
-    -- ==================== 关键修复1：只在主框架启用拖动 ====================
+    -- ==================== 使用参考脚本的拖动系统 ====================
     mainFrame.Active = true
-    Instance.new("UIDragDetector", mainFrame) -- 拖动控制器只加在主框架上
+    
+    -- 创建完全透明的拖动图像（参考脚本的核心方法）
+    local transparentDragImage = Instance.new("ImageLabel")
+    transparentDragImage.Image = ""
+    transparentDragImage.Size = UDim2.new(0, 1, 0, 1)
+    transparentDragImage.BackgroundTransparency = 1
+    transparentDragImage.Visible = false
+    transparentDragImage.Parent = mainFrame
+    
+    -- 设置选择图像对象为透明图像
+    mainFrame.SelectionImageObject = transparentDragImage
+    
+    -- 使用UIDragDetector
+    local dragDetector = Instance.new("UIDragDetector")
+    dragDetector.Parent = mainFrame
+    
+    -- 在拖动开始时设置透明反馈
+    dragDetector.DragStarted:Connect(function()
+        dragDetector:SetDragImage(transparentDragImage, -9999, -9999)
+    end)
     -- ===================================================================
     
     ApplyRoundedCorners(mainFrame, 12)
@@ -38,12 +58,6 @@ local function CreateFullUI()
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
     titleBar.Parent = mainFrame
-    
-    -- ==================== 关键修复2：标题栏不单独设置拖动 ====================
-    -- 移除了 titleBar.Active = true 和标题栏的UIDragDetector
-    -- 标题栏现在只是主框架的一部分，点击标题栏会触发主框架的拖动
-    -- ===================================================================
-    
     ApplyRoundedCorners(titleBar, 12)
 
     local titleLabel = Instance.new("TextLabel")
@@ -352,4 +366,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 拖动分离问题已修复")
+print("音乐播放器UI已加载 - 拖动系统已替换为参考脚本的解决方案")
