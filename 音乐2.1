@@ -1,8 +1,7 @@
 local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local tweenService = game:GetService("TweenService")
-local runService = game:GetService("RunService")
+local tweenService = game:GetService("TweenService") -- 添加TweenService
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -25,13 +24,42 @@ local function CreateFullUI()
     mainFrame.Size = UDim2.new(0, 300, 0, 200)
     mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
     mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(225, 225, 225) -- 浅灰色背景
+    mainFrame.BackgroundTransparency = 0 -- 初始完全不透明
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
     
-    -- ==================== 关键修复1：移除CanvasGroup和UIDragDetector ====================
-    -- 保存原始背景色用于恢复
-    local originalBackgroundColor = mainFrame.BackgroundColor3
+    -- ==================== 关键修复：安全的拖动系统 ====================
+    mainFrame.Active = true
+    local dragDetector = Instance.new("UIDragDetector")
+    dragDetector.Parent = mainFrame
+    
+    -- 安全的透明度动画设置
+    local tweenInfo = TweenInfo.new(
+        0.2, -- 动画时长
+        Enum.EasingStyle.Quad, -- 缓动样式
+        Enum.EasingDirection.Out -- 缓动方向
+    )
+    
+    -- 拖动开始时轻微变透明
+    dragDetector.DragStarted:Connect(function()
+        local transparencyTween = tweenService:Create(
+            mainFrame,
+            tweenInfo,
+            {BackgroundTransparency = 0.1} -- 仅10%透明度，避免过度变白
+        )
+        transparencyTween:Play()
+    end)
+    
+    -- 拖动结束时恢复不透明
+    dragDetector.DragEnded:Connect(function()
+        local restoreTween = tweenService:Create(
+            mainFrame,
+            tweenInfo,
+            {BackgroundTransparency = 0} -- 恢复完全不透明
+        )
+        restoreTween:Play()
+    end)
     -- ===================================================================
     
     ApplyRoundedCorners(mainFrame, 12)
@@ -40,7 +68,6 @@ local function CreateFullUI()
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
     titleBar.Parent = mainFrame
-    
     ApplyRoundedCorners(titleBar, 12)
 
     local titleLabel = Instance.new("TextLabel")
@@ -84,58 +111,6 @@ local function CreateFullUI()
     twinButton.Parent = titleBar
     ApplyRoundedCorners(twinButton, 6)
 
-    -- ==================== 关键修复2：使用传统拖动系统 ====================
-    local dragging = false
-    local dragInput, dragStart, startPos
-
-    local function update(input)
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-
-    titleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = mainFrame.Position
-            
-            -- 轻微变暗效果而不是透明
-            local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local darkenTween = tweenService:Create(mainFrame, tweenInfo, {BackgroundColor3 = Color3.fromRGB(200, 200, 200)})
-            darkenTween:Play()
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    titleBar.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-
-    userInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            update(input)
-        end
-    end)
-
-    titleBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-            
-            -- 恢复原始颜色
-            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local restoreTween = tweenService:Create(mainFrame, tweenInfo, {BackgroundColor3 = originalBackgroundColor})
-            restoreTween:Play()
-        end
-    end)
-    -- ===================================================================
-
     -- 输入框创建函数
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local box = Instance.new("TextBox")
@@ -150,6 +125,10 @@ local function CreateFullUI()
         ApplyRoundedCorners(box, 6)
         return box
     end
+
+    local musicIDBox = CreateInputBox(0.2, "[Music ID]", 0.9, 0.05)
+    local volumeBox = CreateInputBox(0.4, "[Volume] (0.1-100)", 0.4, 0.05)
+    local pitchBox = CreateInputBox(0.4, "[Pitch] (0.1-100)", 0.4, 0.55)
 
     -- 按钮创建函数
     local function CreateButton(text, posX, posY, sizeX, color)
@@ -166,6 +145,9 @@ local function CreateFullUI()
         return btn
     end
 
+    local playButton = CreateButton("Play", 0.05, 0.65, 0.4, Color3.fromRGB(100, 100, 100))
+    local stopButton = CreateButton("Stop", 0.55, 0.65, 0.4, Color3.fromRGB(150, 50, 50))
+
     -- 切换按钮创建函数
     local function CreateToggleButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
@@ -180,21 +162,12 @@ local function CreateFullUI()
         return btn
     end
 
-    -- ==================== 关键修复3：直接创建UI元素到mainFrame ====================
-    local musicIDBox = CreateInputBox(0.2, "[Music ID]", 0.9, 0.05)
-    local volumeBox = CreateInputBox(0.4, "[Volume] (0.1-100)", 0.4, 0.05)
-    local pitchBox = CreateInputBox(0.4, "[Pitch] (0.1-100)", 0.4, 0.55)
-    
-    local playButton = CreateButton("Play", 0.05, 0.65, 0.4, Color3.fromRGB(100, 100, 100))
-    local stopButton = CreateButton("Stop", 0.55, 0.65, 0.4, Color3.fromRGB(150, 50, 50))
-    
     local loopToggle = CreateToggleButton("Loop: ON", 0.55, 0.85, 0.4, Color3.new(0,0,0))
     loopToggle.BackgroundTransparency = 1
     loopToggle.TextColor3 = Color3.fromRGB(0, 200, 0)
-    
+
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
-    -- ===================================================================
-    
+
     -- 音频控制系统
     local soundSystem = {
         LoopEnabled = true,
@@ -235,11 +208,6 @@ local function CreateFullUI()
     UpdateModeButton()
     UpdateTwinModeButton()
     
-    -- ==================== 关键修复4：移除不必要的保护机制 ====================
-    -- 现在使用简单的颜色变化而不是透明度，不需要复杂的保护机制
-    -- ===================================================================
-    
-    -- 音乐控制功能
     local function generateNaturalName()
         local prefixes = {"Music", "Sound", "Track", "Audio", "BG", "SFX", "Ambient"}
         local suffixes = {"Player", "System", "Device", "Box", "Machine", "Unit"}
@@ -404,8 +372,29 @@ local function CreateFullUI()
         loopToggle.TextColor3 = soundSystem.LoopEnabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
     end)
 
+    -- ==================== 最终安全保护 ====================
+    -- 防止UI变白的额外保护
+    local heartbeatConnection = game:GetService("RunService").Heartbeat:Connect(function()
+        -- 确保背景色不会意外变成纯白
+        if mainFrame.BackgroundColor3 == Color3.fromRGB(255, 255, 255) then
+            mainFrame.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
+        end
+        -- 确保透明度不会异常
+        if mainFrame.BackgroundTransparency > 0.5 then
+            mainFrame.BackgroundTransparency = 0
+        end
+    end)
+    
+    -- 清理连接
+    screenGui.AncestryChanged:Connect(function()
+        if not screenGui:IsDescendantOf(game) then
+            heartbeatConnection:Disconnect()
+        end
+    end)
+    -- =====================================================
+
     return screenGui
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - UI变白问题已彻底修复，使用传统拖动系统")
+print("音乐播放器UI已加载 - 使用最终解决方案，UI变白问题已彻底修复")
