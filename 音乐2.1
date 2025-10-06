@@ -13,17 +13,6 @@ local function ApplyRoundedCorners(uiElement, cornerRadius)
     return uiCorner
 end
 
--- 添加阴影效果函数
-local function ApplyShadowEffect(uiElement)
-    local uiStroke = Instance.new("UIStroke")
-    uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    uiStroke.Color = Color3.fromRGB(0, 0, 0)
-    uiStroke.Transparency = 0.8
-    uiStroke.Thickness = 2
-    uiStroke.Parent = uiElement
-    return uiStroke
-end
-
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "MusicPlayerUI_"..math.random(1000,9999)
@@ -31,29 +20,36 @@ local function CreateFullUI()
     screenGui.DisplayOrder = 999
     screenGui.Parent = player.PlayerGui
 
-    -- ==================== 主容器美化 ====================
+    -- ==================== 主容器美化（增强渐变效果） ====================
     local mainFrame = Instance.new("Frame")
     mainFrame.Size = UDim2.new(0, 300, 0, 200) -- 保持原有尺寸
     mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
     mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45) -- 深色现代背景
+    mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
     mainFrame.BackgroundTransparency = 0
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = screenGui
     
-    -- 添加渐变背景效果
+    -- 增强渐变背景效果（更明显的45度角渐变）
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 50)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 40))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(45, 45, 60)),  -- 顶部较亮
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 35))   -- 底部较暗
     })
-    gradient.Rotation = 45
+    gradient.Rotation = 45  -- 45度角渐变，视觉效果更明显
     gradient.Parent = mainFrame
     
     ApplyRoundedCorners(mainFrame, 12)
-    ApplyShadowEffect(mainFrame)
     
-    -- ==================== 标题栏美化 ====================
+    -- 添加阴影效果
+    local uiStroke = Instance.new("UIStroke")
+    uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    uiStroke.Color = Color3.fromRGB(0, 0, 0)
+    uiStroke.Transparency = 0.8
+    uiStroke.Thickness = 2
+    uiStroke.Parent = mainFrame
+    
+    -- ==================== 标题栏美化（增强渐变） ====================
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, -20, 0, 30)
     titleBar.Position = UDim2.new(0, 10, 0, 5)
@@ -62,12 +58,13 @@ local function CreateFullUI()
     titleBar.BorderSizePixel = 0
     titleBar.Parent = mainFrame
     
-    -- 标题栏渐变
+    -- 增强标题栏渐变效果（垂直渐变）
     local titleGradient = Instance.new("UIGradient")
     titleGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 100, 180)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 80, 160))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 100, 220)),  -- 顶部亮蓝色
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 80, 180))    -- 底部深蓝色
     })
+    titleGradient.Rotation = 90  -- 垂直渐变
     titleGradient.Parent = titleBar
     
     ApplyRoundedCorners(titleBar, 8)
@@ -83,7 +80,7 @@ local function CreateFullUI()
     titleLabel.BackgroundTransparency = 1
     titleLabel.Parent = titleBar
 
-    -- ==================== 控制按钮美化 ====================
+    -- ==================== 控制按钮 ====================
     local closeButton = Instance.new("TextButton")
     closeButton.Size = UDim2.new(0, 25, 0, 25)
     closeButton.Position = UDim2.new(1, -30, 0.5, -12.5)
@@ -114,16 +111,32 @@ local function CreateFullUI()
     twinButton.Parent = titleBar
     ApplyRoundedCorners(twinButton, 6)
 
-    -- ==================== 输入框美化 ====================
-    local function CreateStyledInputBox(posY, placeholder, sizeX, posX)
+    -- ==================== 输入框美化（添加渐变背景） ====================
+    local function CreateInputBox(posY, placeholder, sizeX, posX)
         local container = Instance.new("Frame")
         container.Size = UDim2.new(sizeX, 0, 0, 28)
         container.Position = UDim2.new(posX, 0, posY, 0)
         container.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
         container.BorderSizePixel = 0
         container.Parent = mainFrame
+        
+        -- 输入框渐变背景
+        local inputGradient = Instance.new("UIGradient")
+        inputGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 75)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(45, 45, 60))
+        })
+        inputGradient.Parent = container
+        
         ApplyRoundedCorners(container, 6)
-        ApplyShadowEffect(container)
+        
+        -- 添加输入框阴影
+        local inputStroke = Instance.new("UIStroke")
+        inputStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        inputStroke.Color = Color3.fromRGB(0, 0, 0)
+        inputStroke.Transparency = 0.8
+        inputStroke.Thickness = 1
+        inputStroke.Parent = container
         
         local box = Instance.new("TextBox")
         box.Size = UDim2.new(1, -10, 1, -6)
@@ -139,12 +152,12 @@ local function CreateFullUI()
         return box
     end
 
-    local musicIDBox = CreateStyledInputBox(0.18, "输入音乐ID...", 0.9, 0.05)
-    local volumeBox = CreateStyledInputBox(0.38, "音量 0.1-100", 0.4, 0.05)
-    local pitchBox = CreateStyledInputBox(0.38, "音调 0.1-100", 0.4, 0.55)
+    local musicIDBox = CreateInputBox(0.2, "输入音乐ID...", 0.9, 0.05)
+    local volumeBox = CreateInputBox(0.4, "音量 0.1-100", 0.4, 0.05)
+    local pitchBox = CreateInputBox(0.4, "音调 0.1-100", 0.4, 0.55)
 
-    -- ==================== 功能按钮美化 ====================
-    local function CreateStyledButton(text, posX, posY, sizeX, color)
+    -- ==================== 功能按钮美化（关键改进：播放按钮状态颜色） ====================
+    local function CreateStyledButton(text, posX, posY, sizeX, defaultColor)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 32)
         btn.Position = UDim2.new(posX, 0, posY, 0)
@@ -152,35 +165,45 @@ local function CreateFullUI()
         btn.Font = Enum.Font.GothamSemibold
         btn.TextSize = 13
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.BackgroundColor3 = color
+        btn.BackgroundColor3 = defaultColor
         btn.AutoButtonColor = true
         btn.BorderSizePixel = 0
         btn.Parent = mainFrame
         
-        -- 按钮悬停效果
-        btn.MouseEnter:Connect(function()
-            local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local tween = tweenService:Create(btn, tweenInfo, {BackgroundColor3 = Color3.fromRGB(
-                math.min(color.R * 255 + 15, 255),
-                math.min(color.G * 255 + 15, 255),
-                math.min(color.B * 255 + 15, 255)
-            )})
-            tween:Play()
-        end)
-        
-        btn.MouseLeave:Connect(function()
-            local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local tween = tweenService:Create(btn, tweenInfo, {BackgroundColor3 = color})
-            tween:Play()
-        end)
+        -- 按钮渐变效果
+        local btnGradient = Instance.new("UIGradient")
+        btnGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(
+                math.min(defaultColor.R * 255 + 15, 255),
+                math.min(defaultColor.G * 255 + 15, 255),
+                math.min(defaultColor.B * 255 + 15, 255)
+            )),
+            ColorSequenceKeypoint.new(1, defaultColor)
+        })
+        btnGradient.Rotation = 90  -- 垂直渐变
+        btnGradient.Parent = btn
         
         ApplyRoundedCorners(btn, 8)
-        ApplyShadowEffect(btn)
+        
+        -- 按钮阴影
+        local btnStroke = Instance.new("UIStroke")
+        btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        btnStroke.Color = Color3.fromRGB(0, 0, 0)
+        btnStroke.Transparency = 0.8
+        btnStroke.Thickness = 1
+        btnStroke.Parent = btn
+        
         return btn
     end
 
-    local playButton = CreateStyledButton("播放", 0.05, 0.65, 0.4, Color3.fromRGB(70, 180, 100))
-    local stopButton = CreateStyledButton("停止", 0.55, 0.65, 0.4, Color3.fromRGB(220, 80, 80))
+    -- ==================== 关键改进：播放按钮状态颜色系统 ====================
+    -- 播放按钮的默认颜色（Roblox官方蓝色）
+    local playButtonDefaultColor = Color3.fromRGB(0, 162, 255) -- Roblox品牌蓝色
+    local playButtonSuccessColor = Color3.fromRGB(70, 200, 100)   -- 成功：绿色
+    local playButtonFailureColor = Color3.fromRGB(220, 80, 80)     -- 失败：红色
+    
+    local playButton = CreateStyledButton("播放", 0.05, 0.65, 0.4, playButtonDefaultColor)
+    local stopButton = CreateStyledButton("停止", 0.55, 0.65, 0.4, Color3.fromRGB(150, 80, 80))
 
     -- ==================== 切换按钮美化 ====================
     local function CreateToggleButton(text, posX, posY, sizeX, color)
@@ -196,8 +219,28 @@ local function CreateFullUI()
         btn.BorderSizePixel = 0
         btn.Parent = mainFrame
         
+        -- 切换按钮渐变
+        local toggleGradient = Instance.new("UIGradient")
+        toggleGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(
+                math.min(color.R * 255 + 10, 255),
+                math.min(color.G * 255 + 10, 255),
+                math.min(color.B * 255 + 10, 255)
+            )),
+            ColorSequenceKeypoint.new(1, color)
+        })
+        toggleGradient.Parent = btn
+        
         ApplyRoundedCorners(btn, 6)
-        ApplyShadowEffect(btn)
+        
+        -- 切换按钮阴影
+        local toggleStroke = Instance.new("UIStroke")
+        toggleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        toggleStroke.Color = Color3.fromRGB(0, 0, 0)
+        toggleStroke.Transparency = 0.8
+        toggleStroke.Thickness = 1
+        toggleStroke.Parent = btn
+        
         return btn
     end
 
@@ -387,6 +430,7 @@ local function CreateFullUI()
         return Mode1_Play(musicID, volume, pitch, loopEnabled) or Mode2_Play(musicID, volume, pitch, loopEnabled)
     end
     
+    -- ==================== 关键改进：播放按钮状态反馈系统 ====================
     local function handlePlayback()
         local musicID = musicIDBox.Text:gsub("%D+", "")
         if not musicID:match("^%d+$") or #musicID < 6 then return end
@@ -403,17 +447,34 @@ local function CreateFullUI()
             success = AutoMode_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
         end
         
-        playButton.BackgroundColor3 = success and Color3.fromRGB(70, 200, 100) or Color3.fromRGB(200, 70, 70)
-        task.delay(0.5, function() 
-            playButton.BackgroundColor3 = Color3.fromRGB(70, 180, 100) 
+        -- 关键改进：播放按钮状态颜色反馈（闪动效果）
+        if success then
+            -- 播放成功：闪动绿色
+            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            local successTween = tweenService:Create(playButton, tweenInfo, {BackgroundColor3 = playButtonSuccessColor})
+            successTween:Play()
+        else
+            -- 播放失败：闪动红色
+            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            local failureTween = tweenService:Create(playButton, tweenInfo, {BackgroundColor3 = playButtonFailureColor})
+            failureTween:Play()
+        end
+        
+        -- 1秒后恢复默认的Roblox蓝色
+        task.delay(1.0, function()
+            local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            local restoreTween = tweenService:Create(playButton, tweenInfo, {BackgroundColor3 = playButtonDefaultColor})
+            restoreTween:Play()
         end)
     end
 
     local function handleStop()
         StopAllSounds()
-        stopButton.BackgroundColor3 = Color3.fromRGB(250, 100, 100)
-        task.delay(0.5, function() 
-            stopButton.BackgroundColor3 = Color3.fromRGB(220, 80, 80) 
+        stopButton.BackgroundColor3 = Color3.fromRGB(200, 100, 100)
+        task.delay(0.5, function()
+            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            local tween = tweenService:Create(stopButton, tweenInfo, {BackgroundColor3 = Color3.fromRGB(150, 80, 80)})
+            tween:Play()
         end)
     end
     
@@ -430,4 +491,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("🎵 音乐播放器UI已加载 - 现代化美化完成！")
+print("🎵 音乐播放器UI已加载 - 渐变效果与状态反馈系统优化完成！")
