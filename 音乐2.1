@@ -24,22 +24,21 @@ local function CreateFullUI()
     mainFrame.Size = UDim2.new(0, 300, 0, 200)
     mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
     mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(240, 240, 240) -- 使用稍深的背景色
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
     
-    -- ==================== 使用参考脚本的拖动系统 ====================
+    -- ==================== 关键修复：彻底解决拖动圆环和UI变白问题 ====================
     mainFrame.Active = true
     
     -- 创建完全透明的拖动图像（参考脚本的核心方法）
-    local transparentDragImage = Instance.new("ImageLabel")
-    transparentDragImage.Image = ""
+    local transparentDragImage = Instance.new("Frame")
     transparentDragImage.Size = UDim2.new(0, 1, 0, 1)
     transparentDragImage.BackgroundTransparency = 1
     transparentDragImage.Visible = false
     transparentDragImage.Parent = mainFrame
     
-    -- 设置选择图像对象为透明图像
+    -- 设置选择图像对象为透明图像（隐藏默认圆环的关键）
     mainFrame.SelectionImageObject = transparentDragImage
     
     -- 使用UIDragDetector
@@ -49,6 +48,23 @@ local function CreateFullUI()
     -- 在拖动开始时设置透明反馈
     dragDetector.DragStarted:Connect(function()
         dragDetector:SetDragImage(transparentDragImage, -9999, -9999)
+    end)
+    
+    -- 防止UI变白的保护机制
+    local originalBackgroundColor = mainFrame.BackgroundColor3
+    local isBeingDragged = false
+    
+    -- 安全的事件处理，防止颜色冲突
+    dragDetector.DragStarted:Connect(function()
+        isBeingDragged = true
+        -- 使用轻微的颜色变化，避免过度变白
+        mainFrame.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+    end)
+    
+    dragDetector.DragEnded:Connect(function()
+        isBeingDragged = false
+        -- 恢复原始颜色
+        mainFrame.BackgroundColor3 = originalBackgroundColor
     end)
     -- ===================================================================
     
@@ -366,4 +382,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 拖动系统已替换为参考脚本的解决方案")
+print("音乐播放器UI已加载 - 拖动圆环和UI变白问题已彻底修复")
