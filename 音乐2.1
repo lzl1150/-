@@ -34,37 +34,6 @@ local function CreateFullUI()
     dragDetector.Parent = mainFrame
     -- ===================================================================
     
-    -- ==================== 新增：拖动时透明效果 ====================
-    -- 创建透明度变化的TweenInfo
-    local tweenInfo = TweenInfo.new(
-        0.2, -- 动画时长
-        Enum.EasingStyle.Quad, -- 缓动样式
-        Enum.EasingDirection.Out -- 缓动方向
-    )
-    
-    -- 拖动开始时的透明度变化
-    dragDetector.DragStarted:Connect(function()
-        -- 使用TweenService创建平滑的半透明效果
-        local transparencyTween = tweenService:Create(
-            mainFrame,
-            tweenInfo,
-            {BackgroundTransparency = 0.3} -- 变为半透明
-        )
-        transparencyTween:Play()
-    end)
-    
-    -- 拖动结束时的透明度恢复
-    dragDetector.DragEnded:Connect(function()
-        -- 恢复原始透明度
-        local restoreTween = tweenService:Create(
-            mainFrame,
-            tweenInfo,
-            {BackgroundTransparency = 0} -- 恢复不透明
-        )
-        restoreTween:Play()
-    end)
-    -- ==================== 透明效果添加完成 ====================
-    
     ApplyRoundedCorners(mainFrame, 12)
 
     local titleBar = Instance.new("Frame")
