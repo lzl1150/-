@@ -4,7 +4,7 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
--- 添加圆角效果的函
+-- 添加圆角效果的函数
 local function ApplyRoundedCorners(uiElement, cornerRadius)
     local uiCorner = Instance.new("UICorner")
     uiCorner.CornerRadius = UDim.new(0, cornerRadius or 8)
