@@ -1,6 +1,7 @@
 local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
+local tweenService = game:GetService("TweenService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -29,7 +30,56 @@ local function CreateFullUI()
     
     -- ==================== 关键修复1：只在主框架启用拖动 ====================
     mainFrame.Active = true
-    Instance.new("UIDragDetector", mainFrame) -- 拖动控制器只加在主框架上
+    
+    -- ==================== 新增：添加CanvasGroup用于整体透明度控制 ====================
+    local canvasGroup = Instance.new("CanvasGroup")
+    canvasGroup.GroupTransparency = 0  -- 初始完全不透明
+    canvasGroup.Parent = mainFrame
+    
+    -- 将mainFrame的所有现有子项重新父级到canvasGroup
+    local children = {}
+    for _, child in ipairs(mainFrame:GetChildren()) do
+        table.insert(children, child)
+    end
+    for _, child in ipairs(children) do
+        child.Parent = canvasGroup
+    end
+    -- ===================================================================
+    
+    local dragDetector = Instance.new("UIDragDetector")
+    dragDetector.Parent = mainFrame
+    
+    -- ==================== 新增：拖动时的透明度变化功能 ====================
+    local originalTransparency = 0
+    local targetTransparency = 0.5  -- 拖动时的目标透明度
+    local tweenDuration = 0.2      -- 渐变持续时间
+    
+    -- 创建透明度变化的TweenInfo
+    local tweenInfo = TweenInfo.new(
+        tweenDuration,
+        Enum.EasingStyle.Quad,
+        Enum.EasingDirection.Out
+    )
+    
+    -- 拖动开始时的透明度变化
+    dragDetector.DragStarted:Connect(function()
+        local transparencyTween = tweenService:Create(
+            canvasGroup,
+            tweenInfo,
+            {GroupTransparency = targetTransparency}
+        )
+        transparencyTween:Play()
+    end)
+    
+    -- 拖动结束时的透明度恢复
+    dragDetector.DragEnded:Connect(function()
+        local restoreTween = tweenService:Create(
+            canvasGroup,
+            tweenInfo,
+            {GroupTransparency = originalTransparency}
+        )
+        restoreTween:Play()
+    end)
     -- ===================================================================
     
     ApplyRoundedCorners(mainFrame, 12)
@@ -37,7 +87,7 @@ local function CreateFullUI()
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
-    titleBar.Parent = mainFrame
+    titleBar.Parent = canvasGroup
     
     -- ==================== 关键修复2：标题栏不单独设置拖动 ====================
     -- 移除了 titleBar.Active = true 和标题栏的UIDragDetector
@@ -97,7 +147,7 @@ local function CreateFullUI()
         box.TextColor3 = Color3.fromRGB(0, 0, 0)
         box.Font = Enum.Font.SourceSans
         box.TextSize = 14
-        box.Parent = mainFrame
+        box.Parent = canvasGroup
         ApplyRoundedCorners(box, 6)
         return box
     end
@@ -116,7 +166,7 @@ local function CreateFullUI()
         btn.TextSize = 14
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.BackgroundColor3 = color
-        btn.Parent = mainFrame
+        btn.Parent = canvasGroup
         ApplyRoundedCorners(btn, 8)
         return btn
     end
@@ -133,7 +183,7 @@ local function CreateFullUI()
         btn.Font = Enum.Font.SourceSansBold
         btn.TextSize = 12
         btn.BackgroundColor3 = color
-        btn.Parent = mainFrame
+        btn.Parent = canvasGroup
         ApplyRoundedCorners(btn, 6)
         return btn
     end
@@ -352,4 +402,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 拖动分离问题已修复")
+print("音乐播放器UI已加载 - 拖动分离问题已修复，并添加了拖动透明度效果")
