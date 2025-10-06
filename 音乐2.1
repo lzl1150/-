@@ -1,4 +1,7 @@
-local player = game:GetSe
+local player = game:GetService("Players").LocalPlayer
+local userInputService = game:GetService("UserInputService")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local tweenService = game:GetService("TweenService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
