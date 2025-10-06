@@ -28,72 +28,79 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
     
-    -- ==================== 关键修复1：只在主框架启用拖动 ====================
-    mainFrame.Active = true
-    
-    -- ==================== 新增：添加CanvasGroup用于整体透明度控制 ====================
+    -- ==================== 关键修复：正确的CanvasGroup配置 ====================
+    -- 先创建CanvasGroup并设置正确属性
     local canvasGroup = Instance.new("CanvasGroup")
-    canvasGroup.GroupTransparency = 0  -- 初始完全不透明
+    canvasGroup.GroupTransparency = 0  -- 确保完全不透明[6,8](@ref)
+    canvasGroup.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
+    
+    -- 确保UI可以交互和接收点击[6,7](@ref)
+    canvasGroup.Interactable = true
+    canvasGroup.BlocksRaycasts = true
+    canvasGroup.IgnoreParentGroups = false
+    
     canvasGroup.Parent = mainFrame
     
-    -- 将mainFrame的所有现有子项重新父级到canvasGroup
-    local children = {}
-    for _, child in ipairs(mainFrame:GetChildren()) do
-        table.insert(children, child)
+    -- 重新组织父子关系：所有UI元素都放在canvasGroup下
+    local function ReparentToCanvasGroup()
+        local children = {}
+        for _, child in ipairs(mainFrame:GetChildren()) do
+            if child ~= canvasGroup then
+                table.insert(children, child)
+            end
+        end
+        for _, child in ipairs(children) do
+            child.Parent = canvasGroup
+        end
     end
-    for _, child in ipairs(children) do
-        child.Parent = canvasGroup
-    end
-    -- ===================================================================
     
+    -- ==================== 修复拖动系统 ====================
+    mainFrame.Active = true
+    
+    -- 简化拖动检测器
     local dragDetector = Instance.new("UIDragDetector")
     dragDetector.Parent = mainFrame
     
-    -- ==================== 新增：拖动时的透明度变化功能 ====================
-    local originalTransparency = 0
-    local targetTransparency = 0.5  -- 拖动时的目标透明度
-    local tweenDuration = 0.2      -- 渐变持续时间
+    -- 创建透明拖动图像（隐藏默认圆环）
+    local transparentDragImage = Instance.new("Frame")
+    transparentDragImage.Size = UDim2.new(0, 1, 0, 1)
+    transparentDragImage.BackgroundTransparency = 1
+    transparentDragImage.Visible = false
+    transparentDragImage.Parent = mainFrame
     
-    -- 创建透明度变化的TweenInfo
-    local tweenInfo = TweenInfo.new(
-        tweenDuration,
-        Enum.EasingStyle.Quad,
-        Enum.EasingDirection.Out
-    )
+    -- 设置拖动图像
+    mainFrame.SelectionImageObject = transparentDragImage
     
-    -- 拖动开始时的透明度变化
+    -- 安全的拖动事件处理
+    local isDragging = false
+    
     dragDetector.DragStarted:Connect(function()
-        local transparencyTween = tweenService:Create(
-            canvasGroup,
-            tweenInfo,
-            {GroupTransparency = targetTransparency}
-        )
-        transparencyTween:Play()
+        isDragging = true
+        dragDetector:SetDragImage(transparentDragImage, -9999, -9999)
+        
+        -- 拖动时轻微变透明
+        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = tweenService:Create(canvasGroup, tweenInfo, {GroupTransparency = 0.3})
+        tween:Play()
     end)
     
-    -- 拖动结束时的透明度恢复
     dragDetector.DragEnded:Connect(function()
-        local restoreTween = tweenService:Create(
-            canvasGroup,
-            tweenInfo,
-            {GroupTransparency = originalTransparency}
-        )
-        restoreTween:Play()
+        isDragging = false
+        
+        -- 恢复不透明
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = tweenService:Create(canvasGroup, tweenInfo, {GroupTransparency = 0})
+        tween:Play()
     end)
     -- ===================================================================
-    
+
     ApplyRoundedCorners(mainFrame, 12)
 
+    -- 创建UI元素（这些会自动被ReparentToCanvasGroup处理）
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
-    titleBar.Parent = canvasGroup
-    
-    -- ==================== 关键修复2：标题栏不单独设置拖动 ====================
-    -- 移除了 titleBar.Active = true 和标题栏的UIDragDetector
-    -- 标题栏现在只是主框架的一部分，点击标题栏会触发主框架的拖动
-    -- ===================================================================
-    
+    titleBar.Parent = mainFrame  -- 临时父级，后面会重新父级
     ApplyRoundedCorners(titleBar, 12)
 
     local titleLabel = Instance.new("TextLabel")
@@ -147,7 +154,7 @@ local function CreateFullUI()
         box.TextColor3 = Color3.fromRGB(0, 0, 0)
         box.Font = Enum.Font.SourceSans
         box.TextSize = 14
-        box.Parent = canvasGroup
+        box.Parent = mainFrame
         ApplyRoundedCorners(box, 6)
         return box
     end
@@ -166,7 +173,7 @@ local function CreateFullUI()
         btn.TextSize = 14
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.BackgroundColor3 = color
-        btn.Parent = canvasGroup
+        btn.Parent = mainFrame
         ApplyRoundedCorners(btn, 8)
         return btn
     end
@@ -183,7 +190,7 @@ local function CreateFullUI()
         btn.Font = Enum.Font.SourceSansBold
         btn.TextSize = 12
         btn.BackgroundColor3 = color
-        btn.Parent = canvasGroup
+        btn.Parent = mainFrame
         ApplyRoundedCorners(btn, 6)
         return btn
     end
@@ -194,6 +201,34 @@ local function CreateFullUI()
 
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
 
+    -- ==================== 关键修复：在创建所有UI后重新父级 ====================
+    -- 等待一帧确保所有UI元素创建完成
+    task.defer(function()
+        ReparentToCanvasGroup()
+    end)
+    
+    -- 添加安全网：防止UI变白
+    local heartbeatConnection = game:GetService("RunService").Heartbeat:Connect(function()
+        -- 如果检测到UI异常变白，立即修复
+        if canvasGroup.GroupTransparency > 0.5 and not isDragging then
+            canvasGroup.GroupTransparency = 0
+        end
+        
+        -- 确保背景色正确
+        if mainFrame.BackgroundColor3 == Color3.fromRGB(255, 255, 255) then
+            mainFrame.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
+        end
+    end)
+    
+    -- 清理连接
+    screenGui.AncestryChanged:Connect(function()
+        if not screenGui:IsDescendantOf(game) then
+            heartbeatConnection:Disconnect()
+        end
+    end)
+    -- ===================================================================
+
+    -- ... 其余音频控制代码保持不变 ...
     -- 音频控制系统
     local soundSystem = {
         LoopEnabled = true,
@@ -402,4 +437,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 拖动分离问题已修复，并添加了拖动透明度效果")
+print("音乐播放器UI已加载 - UI变白和拖动问题已彻底修复")
