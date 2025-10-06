@@ -33,8 +33,8 @@ local function CreateFullUI()
     -- 关键改进：增强主容器渐变效果，提高对比度
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 55, 65)),  -- 明显提高顶部亮度
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 35, 45))   -- 适度提高底部亮度
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(75, 75, 85)),  -- 明显提高顶部亮度
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(55, 55, 65))   -- 适度提高底部亮度
     })
     gradient.Rotation = 45
     gradient.Parent = mainFrame
@@ -72,7 +72,7 @@ local function CreateFullUI()
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -80, 1, 0)
     titleLabel.Position = UDim2.new(0, 10, 0, 0)
-    titleLabel.Text = "MUSIC PLAYER ♩♪[made by余客]"
+    titleLabel.Text = "MUSIC PLAYER ♪[made by余客]"
     titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
