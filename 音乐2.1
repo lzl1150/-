@@ -1,7 +1,6 @@
 local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local runService = game:GetService("RunService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -15,7 +14,7 @@ end
 
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "Rec_"..math.random(1000,9999)
+    screenGui.Name = "MusicPlayerUI_"..math.random(1000,9999)
     screenGui.ResetOnSpawn = false
     screenGui.DisplayOrder = 999
     screenGui.Parent = player.PlayerGui
@@ -28,12 +27,23 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
     
+    -- ==================== 关键修复1：只在主框架启用拖动 ====================
+    mainFrame.Active = true
+    Instance.new("UIDragDetector", mainFrame) -- 拖动控制器只加在主框架上
+    -- ===================================================================
+    
     ApplyRoundedCorners(mainFrame, 12)
 
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
     titleBar.Parent = mainFrame
+    
+    -- ==================== 关键修复2：标题栏不单独设置拖动 ====================
+    -- 移除了 titleBar.Active = true 和标题栏的UIDragDetector
+    -- 标题栏现在只是主框架的一部分，点击标题栏会触发主框架的拖动
+    -- ===================================================================
+    
     ApplyRoundedCorners(titleBar, 12)
 
     local titleLabel = Instance.new("TextLabel")
@@ -41,7 +51,7 @@ local function CreateFullUI()
     titleLabel.Position = UDim2.new(0, 5, 0, 0)
     titleLabel.Text = "MUSIC PLAYER ♪♪[made by余客]"
     titleLabel.TextColor3 = Color3.fromRGB(50, 50, 50)
-    titleLabel.TextSize = 15
+    titleLabel.TextSize = 18
     titleLabel.Font = Enum.Font.SourceSansBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.BackgroundTransparency = 1
@@ -198,133 +208,6 @@ local function CreateFullUI()
         return strategies[math.random(#strategies)]()
     end
     
-    -- ==================== 修复版拖动系统 ====================
-    local dragActive = false
-    local dragStart = Vector2.new()
-    local frameStart = UDim2.new()
-    local currentInput = nil
-    
-    -- 创建透明的拖动背景层
-    local dragBackground = Instance.new("Frame")
-    dragBackground.Size = UDim2.new(1, 0, 1, 0)
-    dragBackground.BackgroundTransparency = 1
-    dragBackground.ZIndex = 0
-    dragBackground.Parent = mainFrame
-
-    -- 检查是否点击在交互元素上
-    local function IsClickOnInteractiveElement(inputPosition)
-        local interactiveElements = {closeButton, twinButton, musicIDBox, volumeBox, pitchBox, playButton, stopButton, loopToggle, modeButton}
-        
-        for _, element in ipairs(interactiveElements) do
-            local absPos = element.AbsolutePosition
-            local absSize = element.AbsoluteSize
-            
-            if inputPosition.X >= absPos.X and inputPosition.X <= absPos.X + absSize.X and
-               inputPosition.Y >= absPos.Y and inputPosition.Y <= absPos.Y + absSize.Y then
-                return true
-            end
-        end
-        return false
-    end
-
-    -- 修复1：统一的输入开始处理函数
-    local function EnhancedInputBegan(input)
-        if (input.UserInputType == Enum.UserInputType.MouseButton1 or 
-            input.UserInputType == Enum.UserInputType.Touch) and
-            not IsClickOnInteractiveElement(input.Position) then
-            
-            -- 修复2：正确的输入捕获
-            if input.UserInputType == Enum.UserInputType.Touch then
-                pcall(function() input:Capture() end)
-            end
-            
-            -- 修复3：正确的变量赋值
-            currentInput = input
-            dragActive = true
-            dragStart = input.Position
-            frameStart = mainFrame.Position
-            
-            -- 修复4：正确的服务引用
-            pcall(function()
-                userInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
-            end)
-            
-            -- 视觉反馈
-            mainFrame.BackgroundTransparency = 0.05
-            
-            return true
-        end
-        return false
-    end
-
-    -- 修复5：统一的输入改变处理函数
-    local function EnhancedInputChanged(input)
-        if dragActive then
-            local currentPos
-            if input.UserInputType == Enum.UserInputType.Touch then
-                currentPos = input.Position
-            else
-                currentPos = userInputService:GetMouseLocation()
-            end
-            
-            local delta = currentPos - dragStart
-            
-            -- 无边界限制的拖动
-            mainFrame.Position = UDim2.new(
-                frameStart.X.Scale, frameStart.X.Offset + delta.X,
-                frameStart.Y.Scale, frameStart.Y.Offset + delta.Y
-            )
-            
-            -- 持续捕获触摸输入
-            if input.UserInputType == Enum.UserInputType.Touch then
-                pcall(function() input:Capture() end)
-            end
-        end
-    end
-
-    -- 修复6：统一的输入结束处理函数
-    local function EnhancedInputEnded(input)
-        if dragActive then
-            dragActive = false
-            currentInput = nil
-            
-            pcall(function()
-                userInputService.MouseBehavior = Enum.MouseBehavior.Default
-            end)
-            
-            -- 恢复视觉外观
-            mainFrame.BackgroundTransparency = 0
-            
-            -- 释放输入捕获
-            if input.UserInputType == Enum.UserInputType.Touch then
-                pcall(function() input:Capture() end)
-            end
-        end
-    end
-
-    -- 修复7：设置拖动处理器
-    local function SetupEnhancedDragging(dragHandle)
-        dragHandle.InputBegan:Connect(EnhancedInputBegan)
-        dragHandle.InputChanged:Connect(EnhancedInputChanged)
-        dragHandle.InputEnded:Connect(EnhancedInputEnded)
-    end
-
-    -- 为标题栏和背景层都设置增强版拖动
-    SetupEnhancedDragging(titleBar)
-    SetupEnhancedDragging(dragBackground)
-    
-    -- 修复8：简化全局输入监控
-    userInputService.InputBegan:Connect(function(input)
-        if dragActive and (input.UserInputType == Enum.UserInputType.MouseButton1 or 
-                           input.UserInputType == Enum.UserInputType.Touch) then
-            if input.UserInputType == Enum.UserInputType.Touch then
-                pcall(function() input:Capture() end)
-            end
-        end
-    end)
-    -- ==================== 拖动系统修复完成 ====================
-
-    -- 音乐控制逻辑（保持不变）
     local function SafeStopSound(soundID)
         local stopped = false
         for _, location in ipairs({workspace, replicatedStorage}) do
@@ -469,4 +352,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 拖动系统修复完成")
+print("音乐播放器UI已加载 - 拖动分离问题已修复")
