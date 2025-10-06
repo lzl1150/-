@@ -1,7 +1,7 @@
 local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local tweenService = game:GetService("TweenService") -- 添加TweenService用于透明度动画
+local tweenService = game:GetService("TweenService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -28,10 +28,21 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 1
     mainFrame.Parent = screenGui
     
-    -- ==================== 关键修复1：只在主框架启用拖动 ====================
+    -- ==================== 关键修复1：安全的拖动设置 ====================
     mainFrame.Active = true
-    local dragDetector = Instance.new("UIDragDetector") -- 保存引用以便添加事件监听
+    local dragDetector = Instance.new("UIDragDetector")
     dragDetector.Parent = mainFrame
+    
+    -- 创建CanvasGroup用于安全的透明度控制
+    local canvasGroup = Instance.new("CanvasGroup")
+    canvasGroup.GroupTransparency = 0  -- 初始完全不透明
+    canvasGroup.GroupColor3 = Color3.fromRGB(225, 225, 225) -- 明确设置组颜色
+    
+    -- 先设置CanvasGroup属性，再设置父级
+    canvasGroup.Parent = mainFrame
+    
+    -- 保存原始背景色用于恢复
+    local originalBackgroundColor = mainFrame.BackgroundColor3
     -- ===================================================================
     
     ApplyRoundedCorners(mainFrame, 12)
@@ -39,13 +50,8 @@ local function CreateFullUI()
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
-    titleBar.Parent = mainFrame
     
-    -- ==================== 关键修复2：标题栏不单独设置拖动 ====================
-    -- 移除了 titleBar.Active = true 和标题栏的UIDragDetector
-    -- 标题栏现在只是主框架的一部分，点击标题栏会触发主框架的拖动
-    -- ===================================================================
-    
+    -- 先创建titleBar，稍后重新父级到canvasGroup
     ApplyRoundedCorners(titleBar, 12)
 
     local titleLabel = Instance.new("TextLabel")
@@ -89,6 +95,61 @@ local function CreateFullUI()
     twinButton.Parent = titleBar
     ApplyRoundedCorners(twinButton, 6)
 
+    -- ==================== 关键修复2：安全的透明度效果 ====================
+    -- 使用更保守的透明度设置，避免过度变白
+    local function SetupSafeTransparencyEffect()
+        local isDragging = false
+        
+        -- 安全的拖动开始处理
+        dragDetector.DragStarted:Connect(function()
+            if isDragging then return end
+            isDragging = true
+            
+            -- 使用更温和的透明度变化（从0.3改为0.15，避免过度变白）
+            local tweenInfo = TweenInfo.new(
+                0.2, -- 动画时长
+                Enum.EasingStyle.Quad, -- 缓动样式
+                Enum.EasingDirection.Out -- 缓动方向
+            )
+            
+            -- 只修改CanvasGroup的透明度，不修改背景色
+            local transparencyTween = tweenService:Create(
+                canvasGroup,
+                tweenInfo,
+                {GroupTransparency = 0.15} -- 轻微半透明效果
+            )
+            transparencyTween:Play()
+        end)
+        
+        -- 安全的拖动结束处理
+        dragDetector.DragEnded:Connect(function()
+            if not isDragging then return end
+            isDragging = false
+            
+            -- 恢复透明度
+            local tweenInfo = TweenInfo.new(
+                0.3, -- 稍长的恢复时间
+                Enum.EasingStyle.Quad,
+                Enum.EasingDirection.Out
+            )
+            
+            local restoreTween = tweenService:Create(
+                canvasGroup,
+                tweenInfo,
+                {GroupTransparency = 0} -- 恢复完全不透明
+            )
+            restoreTween:Play()
+            
+            -- 确保背景色正确恢复
+            task.defer(function()
+                if mainFrame.BackgroundColor3 ~= originalBackgroundColor then
+                    mainFrame.BackgroundColor3 = originalBackgroundColor
+                end
+            end)
+        end)
+    end
+    -- ===================================================================
+
     -- 输入框创建函数
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local box = Instance.new("TextBox")
@@ -99,14 +160,9 @@ local function CreateFullUI()
         box.TextColor3 = Color3.fromRGB(0, 0, 0)
         box.Font = Enum.Font.SourceSans
         box.TextSize = 14
-        box.Parent = mainFrame
         ApplyRoundedCorners(box, 6)
         return box
     end
-
-    local musicIDBox = CreateInputBox(0.2, "[Music ID]", 0.9, 0.05)
-    local volumeBox = CreateInputBox(0.4, "[Volume] (0.1-100)", 0.4, 0.05)
-    local pitchBox = CreateInputBox(0.4, "[Pitch] (0.1-100)", 0.4, 0.55)
 
     -- 按钮创建函数
     local function CreateButton(text, posX, posY, sizeX, color)
@@ -118,13 +174,9 @@ local function CreateFullUI()
         btn.TextSize = 14
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.BackgroundColor3 = color
-        btn.Parent = mainFrame
         ApplyRoundedCorners(btn, 8)
         return btn
     end
-
-    local playButton = CreateButton("Play", 0.05, 0.65, 0.4, Color3.fromRGB(100, 100, 100))
-    local stopButton = CreateButton("Stop", 0.55, 0.65, 0.4, Color3.fromRGB(150, 50, 50))
 
     -- 切换按钮创建函数
     local function CreateToggleButton(text, posX, posY, sizeX, color)
@@ -135,17 +187,36 @@ local function CreateFullUI()
         btn.Font = Enum.Font.SourceSansBold
         btn.TextSize = 12
         btn.BackgroundColor3 = color
-        btn.Parent = mainFrame
         ApplyRoundedCorners(btn, 6)
         return btn
     end
 
+    -- ==================== 关键修复3：正确的父子层级设置 ====================
+    -- 先创建所有UI元素，然后统一设置父级到canvasGroup
+    local musicIDBox = CreateInputBox(0.2, "[Music ID]", 0.9, 0.05)
+    local volumeBox = CreateInputBox(0.4, "[Volume] (0.1-100)", 0.4, 0.05)
+    local pitchBox = CreateInputBox(0.4, "[Pitch] (0.1-100)", 0.4, 0.55)
+    
+    local playButton = CreateButton("Play", 0.05, 0.65, 0.4, Color3.fromRGB(100, 100, 100))
+    local stopButton = CreateButton("Stop", 0.55, 0.65, 0.4, Color3.fromRGB(150, 50, 50))
+    
     local loopToggle = CreateToggleButton("Loop: ON", 0.55, 0.85, 0.4, Color3.new(0,0,0))
     loopToggle.BackgroundTransparency = 1
     loopToggle.TextColor3 = Color3.fromRGB(0, 200, 0)
-
+    
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(180, 180, 255))
-
+    
+    -- 将所有UI元素父级到canvasGroup
+    local uiElements = {
+        titleBar, musicIDBox, volumeBox, pitchBox, 
+        playButton, stopButton, loopToggle, modeButton
+    }
+    
+    for _, element in ipairs(uiElements) do
+        element.Parent = canvasGroup
+    end
+    -- ===================================================================
+    
     -- 音频控制系统
     local soundSystem = {
         LoopEnabled = true,
@@ -186,6 +257,32 @@ local function CreateFullUI()
     UpdateModeButton()
     UpdateTwinModeButton()
     
+    -- ==================== 关键修复4：防止UI变白的保护机制 ====================
+    -- 添加背景色保护，防止意外变白
+    local heartbeatConnection = game:GetService("RunService").Heartbeat:Connect(function()
+        -- 检查并修复背景色
+        if mainFrame.BackgroundColor3 == Color3.fromRGB(255, 255, 255) then
+            mainFrame.BackgroundColor3 = originalBackgroundColor
+        end
+        
+        -- 检查并修复过度透明
+        if canvasGroup.GroupTransparency > 0.5 then
+            canvasGroup.GroupTransparency = 0
+        end
+    end)
+    
+    -- 清理连接
+    screenGui.AncestryChanged:Connect(function()
+        if not screenGui:IsDescendantOf(game) then
+            heartbeatConnection:Disconnect()
+        end
+    end)
+    -- ===================================================================
+    
+    -- 设置安全的透明度效果
+    SetupSafeTransparencyEffect()
+    
+    -- 音乐控制功能（保持不变）
     local function generateNaturalName()
         local prefixes = {"Music", "Sound", "Track", "Audio", "BG", "SFX", "Ambient"}
         local suffixes = {"Player", "System", "Device", "Box", "Machine", "Unit"}
@@ -354,4 +451,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("音乐播放器UI已加载 - 拖动分离问题已修复，并添加了拖动透明效果")
+print("音乐播放器UI已加载 - UI变白问题已彻底修复，安全的透明效果已启用")
