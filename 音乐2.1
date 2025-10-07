@@ -36,7 +36,7 @@ local function CreateFullUI()
     mainFrame.Size = UDim2.new(0, 300, 0, 200)
     mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
     mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(85, 85, 90)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(95, 95, 100)
     mainFrame.BackgroundTransparency = 0
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = screenGui
@@ -44,7 +44,7 @@ local function CreateFullUI()
     -- 主容器渐变效果
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 55, 70)),
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(75, 75, 80)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 35, 50))
     })
     gradient.Rotation = 45
@@ -57,7 +57,7 @@ local function CreateFullUI()
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, -20, 0, 30)
     titleBar.Position = UDim2.new(0, 10, 0, 5)
-    titleBar.BackgroundColor3 = Color3.fromRGB(75, 75, 85)
+    titleBar.BackgroundColor3 = Color3.fromRGB(95, 95, 105)
     titleBar.BackgroundTransparency = 0
     titleBar.BorderSizePixel = 0
     titleBar.Parent = mainFrame
