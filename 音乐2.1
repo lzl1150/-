@@ -20,21 +20,21 @@ local function CreateFullUI()
     screenGui.DisplayOrder = 999
     screenGui.Parent = player.PlayerGui
 
-    -- ==================== 主容器美化 - 关键改进：提高整体背景亮度 ====================
+    -- ==================== 主容器美化 - 关键改进：统一深蓝色主题 ====================
     local mainFrame = Instance.new("Frame")
     mainFrame.Size = UDim2.new(0, 300, 0, 200)
     mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
     mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(115, 115, 125) -- 提高整体背景亮度
+    mainFrame.BackgroundColor3 = Color3.fromRGB(50, 70, 120) -- 深蓝色主题
     mainFrame.BackgroundTransparency = 0
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = screenGui
     
-    -- 关键改进：增强主容器渐变效果，提高对比度
+    -- 关键改进：增强渐变效果，使用更明显的蓝色渐变
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(95, 95, 105)),  -- 明显提高顶部亮度
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(55, 55, 65))   -- 适度提高底部亮度
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 100, 180)),  -- 顶部亮蓝色
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 60, 130))   -- 底部深蓝色
     })
     gradient.Rotation = 45
     gradient.Parent = mainFrame
@@ -49,20 +49,20 @@ local function CreateFullUI()
     uiStroke.Thickness = 2
     uiStroke.Parent = mainFrame
 
-    -- ==================== 标题栏美化 ====================
+    -- ==================== 标题栏美化 - 与主背景统一色调 ====================
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, -20, 0, 30)
     titleBar.Position = UDim2.new(0, 10, 0, 5)
-    titleBar.BackgroundColor3 = Color3.fromRGB(70, 70, 85) -- 提高标题栏亮度
+    titleBar.BackgroundColor3 = Color3.fromRGB(60, 80, 150) -- 与主背景协调的蓝色
     titleBar.BackgroundTransparency = 0
     titleBar.BorderSizePixel = 0
     titleBar.Parent = mainFrame
     
-    -- 标题栏渐变
+    -- 关键改进：增强标题栏渐变效果
     local titleGradient = Instance.new("UIGradient")
     titleGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(90, 120, 200)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 90, 160))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 120, 200)),  -- 更亮的蓝色
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 90, 160))    -- 稍暗的蓝色
     })
     titleGradient.Rotation = 90
     titleGradient.Parent = titleBar
@@ -111,20 +111,20 @@ local function CreateFullUI()
     twinButton.Parent = titleBar
     ApplyRoundedCorners(twinButton, 6)
 
-    -- ==================== 输入框美化 - 关键改进：提高输入框背景亮度 ====================
+    -- ==================== 输入框美化 ====================
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local container = Instance.new("Frame")
         container.Size = UDim2.new(sizeX, 0, 0, 28)
         container.Position = UDim2.new(posX, 0, posY, 0)
-        container.BackgroundColor3 = Color3.fromRGB(65, 65, 80) -- 明显提高输入框背景亮度
+        container.BackgroundColor3 = Color3.fromRGB(65, 65, 80) -- 保持原有颜色不变
         container.BorderSizePixel = 0
         container.Parent = mainFrame
         
-        -- 输入框渐变背景 - 提高亮度
+        -- 输入框渐变背景
         local inputGradient = Instance.new("UIGradient")
         inputGradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(75, 75, 90)),  -- 提高顶部亮度
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 60, 75))   -- 提高底部亮度
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(75, 75, 90)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 60, 75))
         })
         inputGradient.Parent = container
         
@@ -242,7 +242,7 @@ local function CreateFullUI()
     local separator = Instance.new("Frame")
     separator.Size = UDim2.new(1, -20, 0, 1)
     separator.Position = UDim2.new(0, 10, 0.58, 0)
-    separator.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
+    separator.BackgroundColor3 = Color3.fromRGB(70, 70, 90) -- 保持原有颜色不变
     separator.BorderSizePixel = 0
     separator.Parent = mainFrame
 
@@ -476,4 +476,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("🎵 音乐播放器UI已加载 - 背景亮度优化完成！")
+print("🎵 音乐播放器UI已加载 - 主背景与标题栏优化完成！")
