@@ -13,6 +13,17 @@ local function ApplyRoundedCorners(uiElement, cornerRadius)
     return uiCorner
 end
 
+-- 添加阴影效果函数
+local function ApplyShadowEffect(uiElement)
+    local uiStroke = Instance.new("UIStroke")
+    uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    uiStroke.Color = Color3.fromRGB(0, 0, 0)
+    uiStroke.Transparency = 0.8
+    uiStroke.Thickness = 2
+    uiStroke.Parent = uiElement
+    return uiStroke
+end
+
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "MusicPlayerUI_"..math.random(1000,9999)
@@ -20,49 +31,42 @@ local function CreateFullUI()
     screenGui.DisplayOrder = 999
     screenGui.Parent = player.PlayerGui
 
-    -- ==================== 主容器美化 - 关键改进：统一深蓝色主题 ====================
+    -- ==================== 主容器美化 ====================
     local mainFrame = Instance.new("Frame")
     mainFrame.Size = UDim2.new(0, 300, 0, 200)
     mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
     mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(50, 70, 120) -- 深蓝色主题
+    mainFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
     mainFrame.BackgroundTransparency = 0
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = screenGui
     
-    -- 关键改进：增强渐变效果，使用更明显的蓝色渐变
+    -- 主容器渐变效果
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 100, 180)),  -- 顶部亮蓝色
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 60, 130))   -- 底部深蓝色
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 55, 70)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 35, 50))
     })
     gradient.Rotation = 45
     gradient.Parent = mainFrame
     
     ApplyRoundedCorners(mainFrame, 12)
+    ApplyShadowEffect(mainFrame)
     
-    -- 添加细微阴影
-    local uiStroke = Instance.new("UIStroke")
-    uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    uiStroke.Color = Color3.fromRGB(0, 0, 0)
-    uiStroke.Transparency = 0.8
-    uiStroke.Thickness = 2
-    uiStroke.Parent = mainFrame
-
-    -- ==================== 标题栏美化 - 与主背景统一色调 ====================
+    -- ==================== 标题栏美化 ====================
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, -20, 0, 30)
     titleBar.Position = UDim2.new(0, 10, 0, 5)
-    titleBar.BackgroundColor3 = Color3.fromRGB(60, 80, 150) -- 与主背景协调的蓝色
+    titleBar.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
     titleBar.BackgroundTransparency = 0
     titleBar.BorderSizePixel = 0
     titleBar.Parent = mainFrame
     
-    -- 关键改进：增强标题栏渐变效果
+    -- 标题栏渐变
     local titleGradient = Instance.new("UIGradient")
     titleGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 120, 200)),  -- 更亮的蓝色
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 90, 160))    -- 稍暗的蓝色
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 100, 180)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 80, 160))
     })
     titleGradient.Rotation = 90
     titleGradient.Parent = titleBar
@@ -72,7 +76,7 @@ local function CreateFullUI()
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -80, 1, 0)
     titleLabel.Position = UDim2.new(0, 10, 0, 0)
-    titleLabel.Text = "MUSIC PLAYER ♪[made by余客]"
+    titleLabel.Text = "MUSIC PLAYER ♪♪[made by余客]"
     titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
@@ -80,7 +84,7 @@ local function CreateFullUI()
     titleLabel.BackgroundTransparency = 1
     titleLabel.Parent = titleBar
 
-    -- ==================== 控制按钮 ====================
+    -- ==================== 控制按钮美化 ====================
     local closeButton = Instance.new("TextButton")
     closeButton.Size = UDim2.new(0, 25, 0, 25)
     closeButton.Position = UDim2.new(1, -30, 0.5, -12.5)
@@ -116,15 +120,15 @@ local function CreateFullUI()
         local container = Instance.new("Frame")
         container.Size = UDim2.new(sizeX, 0, 0, 28)
         container.Position = UDim2.new(posX, 0, posY, 0)
-        container.BackgroundColor3 = Color3.fromRGB(65, 65, 80) -- 保持原有颜色不变
+        container.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
         container.BorderSizePixel = 0
         container.Parent = mainFrame
         
         -- 输入框渐变背景
         local inputGradient = Instance.new("UIGradient")
         inputGradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(75, 75, 90)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 60, 75))
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 75)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(45, 45, 60))
         })
         inputGradient.Parent = container
         
@@ -152,12 +156,12 @@ local function CreateFullUI()
         return box
     end
 
-    local musicIDBox = CreateInputBox(0.18, "输入音乐ID...", 0.9, 0.05)
-    local volumeBox = CreateInputBox(0.38, "音量 0.1-100", 0.4, 0.05)
-    local pitchBox = CreateInputBox(0.38, "音调 0.1-100", 0.4, 0.55)
+    local musicIDBox = CreateInputBox(0.2, "输入音乐ID...", 0.9, 0.05)
+    local volumeBox = CreateInputBox(0.4, "音量 0.1-100", 0.4, 0.05)
+    local pitchBox = CreateInputBox(0.4, "音调 0.1-100", 0.4, 0.55)
 
     -- ==================== 功能按钮美化 ====================
-    local function CreateButton(text, posX, posY, sizeX, color)
+    local function CreateStyledButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 32)
         btn.Position = UDim2.new(posX, 0, posY, 0)
@@ -188,25 +192,17 @@ local function CreateFullUI()
         end)
         
         ApplyRoundedCorners(btn, 8)
-        
-        -- 按钮阴影
-        local btnStroke = Instance.new("UIStroke")
-        btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        btnStroke.Color = Color3.fromRGB(0, 0, 0)
-        btnStroke.Transparency = 0.8
-        btnStroke.Thickness = 1
-        btnStroke.Parent = btn
-        
+        ApplyShadowEffect(btn)
         return btn
     end
 
     -- 播放按钮颜色定义
-    local playButtonDefaultColor = Color3.fromRGB(0, 162, 255) -- Roblox官方蓝色
-    local playButtonSuccessColor = Color3.fromRGB(70, 200, 100) -- 成功绿色
-    local playButtonFailureColor = Color3.fromRGB(220, 80, 80) -- 失败红色
+    local playButtonDefaultColor = Color3.fromRGB(0, 162, 255)
+    local playButtonSuccessColor = Color3.fromRGB(70, 200, 100)
+    local playButtonFailureColor = Color3.fromRGB(220, 80, 80)
     
-    local playButton = CreateButton("播放", 0.05, 0.65, 0.4, playButtonDefaultColor)
-    local stopButton = CreateButton("停止", 0.55, 0.65, 0.4, Color3.fromRGB(220, 80, 80))
+    local playButton = CreateStyledButton("播放", 0.05, 0.65, 0.4, playButtonDefaultColor)
+    local stopButton = CreateStyledButton("停止", 0.55, 0.65, 0.4, Color3.fromRGB(220, 80, 80))
 
     -- ==================== 切换按钮美化 ====================
     local function CreateToggleButton(text, posX, posY, sizeX, color)
@@ -223,15 +219,7 @@ local function CreateFullUI()
         btn.Parent = mainFrame
         
         ApplyRoundedCorners(btn, 6)
-        
-        -- 切换按钮阴影
-        local toggleStroke = Instance.new("UIStroke")
-        toggleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        toggleStroke.Color = Color3.fromRGB(0, 0, 0)
-        toggleStroke.Transparency = 0.8
-        toggleStroke.Thickness = 1
-        toggleStroke.Parent = btn
-        
+        ApplyShadowEffect(btn)
         return btn
     end
 
@@ -242,7 +230,7 @@ local function CreateFullUI()
     local separator = Instance.new("Frame")
     separator.Size = UDim2.new(1, -20, 0, 1)
     separator.Position = UDim2.new(0, 10, 0.58, 0)
-    separator.BackgroundColor3 = Color3.fromRGB(70, 70, 90) -- 保持原有颜色不变
+    separator.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
     separator.BorderSizePixel = 0
     separator.Parent = mainFrame
 
@@ -476,4 +464,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("🎵 音乐播放器UI已加载 - 主背景与标题栏优化完成！")
+print("🎵 音乐播放器UI已加载 - 完整功能版！")
