@@ -56,7 +56,7 @@ local function CreateFullUI()
     -- ==================== 标题栏美化 ====================
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, 0, 0, 30)
-    titleBar.Position = UDim2.new(0, 0, 0, 2.5)
+    titleBar.Position = UDim2.new(0, 8, 0, 2.5)
     titleBar.BackgroundColor3 = Color3.fromRGB(115, 115, 125)
     titleBar.BackgroundTransparency = 0
     titleBar.BorderSizePixel = 0
@@ -74,7 +74,7 @@ local function CreateFullUI()
     ApplyRoundedCorners(titleBar, 8)
     
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -80, 1, 0)
+    titleLabel.Size = UDim2.new(1, -20, 1, 0)
     titleLabel.Position = UDim2.new(0, 10, 0, 0)
     titleLabel.Text = "MUSIC PLAYER ♪♪[made by余客]"
     titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
