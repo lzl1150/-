@@ -305,15 +305,21 @@ local function CreateFullUI()
         return strategies[math.random(#strategies)]()
     end
     
-    -- 参数验证与清理函数（已移除音调随机波动）
+    -- 修复后的参数验证与清理函数
     local function ValidateAndCleanParameters(musicID, volume, pitch)
-        -- 清理音乐ID格式
-        musicID = tostring(musicID):gsub("%D+", ""):sub(1, 10)
-        if #musicID < 6 then return nil end
+        -- 清理音乐ID格式：确保只保留数字
+        musicID = tostring(musicID):gsub("%D+", "")
         
-        -- 参数范围设置（音调不再添加随机波动）
-        volume = math.clamp(tonumber(volume) or math.random(5, 80), 1, 100)
-        pitch = math.clamp(tonumber(pitch) or math.random(5, 20) * 0.1, 0.1, 10)
+        -- 关键修复：恢复严格的长度检查，不足6位直接返回nil
+        if #musicID < 6 then
+            return nil
+        else
+            musicID = musicID:sub(1, 10)  -- 限制长度
+        end
+        
+        -- 参数范围设置（使用原来的默认值：音量1，音调1）
+        volume = math.clamp(tonumber(volume) or 1, 0.1, 100)  -- 使用原来的默认值1
+        pitch = math.clamp(tonumber(pitch) or 1, 0.1, 10)     -- 使用原来的默认值1
         
         -- 仅对音量添加微小随机波动，音调保持原样
         volume = volume * (0.95 + math.random() * 0.1)
@@ -434,15 +440,16 @@ local function CreateFullUI()
         local rawPitch = pitchBox.Text
         
         local musicID, volume, pitch = ValidateAndCleanParameters(rawMusicID, rawVolume, rawPitch)
-        if not musicID then 
-            -- 显示错误提示
+        
+        -- 如果音乐ID无效，直接触发失败状态
+        if not musicID then
             playButton.BackgroundColor3 = playButtonFailureColor
             task.delay(0.5, function()
                 local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
                 local tween = tweenService:Create(playButton, tweenInfo, {BackgroundColor3 = playButtonDefaultColor})
                 tween:Play()
             end)
-            return 
+            return -- 重要：直接退出函数，不尝试播放
         end
         
         local success = false
@@ -492,4 +499,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("🎵 音乐播放器UI已加载 - 音调参数优化完成！")
+print("🎵 音乐播放器UI已加载 - 参数验证修复完成，保留原始默认值！")
