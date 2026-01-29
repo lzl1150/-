@@ -76,7 +76,7 @@ local function CreateFullUI()
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -45, 1, 0)
     titleLabel.Position = UDim2.new(0, 10, 0, 0)
-    titleLabel.Text = "MUSIC PLAYER♪[made by余客upd]"
+    titleLabel.Text = "MUSIC PLAYER♪[made by余客]"
     titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
@@ -279,45 +279,19 @@ local function CreateFullUI()
     UpdateTwinModeButton()
     
     -- ==================== 音乐控制功能 ====================
-    -- 参数随机化与合法化函数
-    local function generateNaturalName()
-        local prefixes = {"BackgroundMusic", "EnvironmentSound", "VehicleEngine", "RadioStream", "AmbientTrack"}
-        local suffixes = {"System", "Controller", "Manager", "Player", "Source"}
-        return prefixes[math.random(#prefixes)]..suffixes[math.random(#suffixes)]..tostring(math.random(100,999))
-    end
-    
-    local function generateMusicIDName(musicID)
-        local patterns = {"AudioClip_%s", "SoundAsset_%s", "MediaPlayer_%s"}
-        return string.format(patterns[math.random(#patterns)], musicID:sub(-6))
-    end
-    
-    local function generateRandomName()
-        local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        local name = ""
-        for i = 1, math.random(8,12) do
-            name = name .. string.sub(chars, math.random(1, #chars), math.random(1, #chars))
-        end
-        return name
-    end
-    
-    local function generateSoundName(musicID)
-        local strategies = {generateNaturalName, generateRandomName, function() return generateMusicIDName(musicID) end}
-        return strategies[math.random(#strategies)]()
-    end
-    
-    -- 修复后的参数验证与清理函数 - 核心修复
+    -- 参数验证与清理函数（已移除音量和音调修改）
     local function ValidateAndCleanParameters(musicID, volume, pitch)
         -- 清理音乐ID格式：确保只保留数字
         musicID = tostring(musicID):gsub("%D+", "")
         
-        -- 关键修复：简化验证逻辑，只做最基本过滤
+        -- 关键修复：恢复严格的长度检查，不足6位直接返回nil
         if #musicID < 6 then
-            return nil  -- 长度不足，返回nil触发错误提示
+            return nil
         end
         
-        -- 使用原始默认值（音量1，音调1）
-        volume = math.clamp(tonumber(volume) or 1, 0.1, 100)
-        pitch = math.clamp(tonumber(pitch) or 1, 0.1, 10)
+        -- 不再修改音量和音调参数，直接使用输入值
+        volume = tonumber(volume) or 1
+        pitch = tonumber(pitch) or 1
         
         return musicID, volume, pitch
     end
@@ -370,10 +344,7 @@ local function CreateFullUI()
             end
         end
         
-        if not soundSystem.RemoteEvent then 
-            warn("[AC6播放器] 未找到AC6_FE_Sounds远程事件")
-            return false 
-        end
+        if not soundSystem.RemoteEvent then return false end
         
         local soundName = generateSoundName(musicID)
         local success = pcall(function()
@@ -405,10 +376,7 @@ local function CreateFullUI()
             end
         end
         
-        if #remoteEvents == 0 then 
-            warn("[AC6播放器] 遍历模式：未找到任何AC6远程事件")
-            return false 
-        end
+        if #remoteEvents == 0 then return false end
         
         for _, remote in ipairs(remoteEvents) do
             local success = pcall(function()
@@ -465,10 +433,8 @@ local function CreateFullUI()
         -- 播放按钮状态颜色反馈
         if success then
             playButton.BackgroundColor3 = playButtonSuccessColor
-            print("[AC6播放器] 音乐播放成功 - ID:", musicID)
         else
             playButton.BackgroundColor3 = playButtonFailureColor
-            warn("[AC6播放器] 音乐播放失败 - 请检查游戏是否支持AC6漏洞")
         end
         
         -- 0.5秒后恢复默认颜色
@@ -502,4 +468,4 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("🎵 AC6音乐播放器UI已加载 - 核心播放功能已修复！")
+print("🎵 音乐播放器UI已加载 - 参数保持原始设置！")
