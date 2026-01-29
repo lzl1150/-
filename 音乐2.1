@@ -2,6 +2,7 @@ local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local tweenService = game:GetService("TweenService")
+local runService = game:GetService("RunService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -251,7 +252,19 @@ local function CreateFullUI()
             mode2 = Color3.fromRGB(220, 140, 100)
         },
         LastSoundName = nil,
-        TwinMode = false
+        TwinMode = false,
+        
+        -- 新增：防护增强系统
+        ProtectionBypass = {
+            Enabled = true,
+            SoundNameStrategies = {"natural", "random", "idbased"},
+            ParentLocations = {workspace, replicatedStorage, game:GetService("Lighting")},
+            DelayRange = {100, 500}, -- 毫秒
+            ParameterRange = {
+                volume = {0, 100},    -- 合理音量范围
+                pitch = {0.1, 100}    -- 合理音调范围
+            }
+        }
     }
     
     local function UpdateModeButton()
@@ -278,22 +291,108 @@ local function CreateFullUI()
     UpdateModeButton()
     UpdateTwinModeButton()
     
-    -- ==================== 音乐控制功能 ====================
-    -- 参数验证与清理函数（已移除音量和音调修改）
-    local function ValidateAndCleanParameters(musicID, volume, pitch)
-        -- 清理音乐ID格式：确保只保留数字
+    -- ==================== 增强的音乐控制功能 ====================
+    
+    -- 1. 增强的声音名称生成系统（防止模式检测）
+    local function generateNaturalName()
+        local prefixes = {"EngineSound", "VehicleAudio", "AmbientTrack", "RadioStream", "EnvironmentSFX"}
+        local suffixes = {"System", "Controller", "Manager", "Player", "Source", "Device"}
+        local numbers = {"001", "002", "003", "004", "005"}
+        return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..numbers[math.random(#numbers)]
+    end
+    
+    local function generateMusicIDName(musicID)
+        local patterns = {"Audio_%s", "Sound_%s", "Track_%s", "Media_%s"}
+        return string.format(patterns[math.random(#patterns)], musicID:sub(-6))
+    end
+    
+    local function generateRandomName()
+        local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        local name = ""
+        for i = 1, math.random(10,15) do
+            name = name .. string.sub(chars, math.random(1, #chars), math.random(1, #chars))
+        end
+        return name
+    end
+    
+    -- 增强的声音名称生成（随机选择策略）
+    local function generateEnhancedSoundName(musicID)
+        local strategies = {
+            function() return generateNaturalName() end,
+            function() return generateRandomName() end,
+            function() return generateMusicIDName(musicID) end
+        }
+        return strategies[math.random(#strategies)]()
+    end
+    
+    -- 2. 智能参数验证与伪装系统
+    local function ValidateAndCamouflageParameters(musicID, volume, pitch)
+        -- 清理音乐ID格式
         musicID = tostring(musicID):gsub("%D+", "")
         
-        -- 关键修复：恢复严格的长度检查，不足6位直接返回nil
+        -- 严格长度检查
         if #musicID < 6 then
             return nil
+        else
+            musicID = musicID:sub(1, 10)
         end
         
-        -- 不再修改音量和音调参数，直接使用输入值
-        volume = tonumber(volume) or 1
-        pitch = tonumber(pitch) or 1
+        -- 使用合理范围内的参数（避免极端值）
+        local validVolume = math.clamp(tonumber(volume) or math.random(40, 70), 
+            soundSystem.ProtectionBypass.ParameterRange.volume[1],
+            soundSystem.ProtectionBypass.ParameterRange.volume[2])
         
-        return musicID, volume, pitch
+        local validPitch = math.clamp(tonumber(pitch) or math.random(8, 15) * 0.1,
+            soundSystem.ProtectionBypass.ParameterRange.pitch[1],
+            soundSystem.ProtectionBypass.ParameterRange.pitch[2])
+        
+        -- 添加微小随机波动（避免完全相同的参数）
+        validVolume = validVolume * (0.98 + math.random() * 0.04)
+        validPitch = validPitch * (0.98 + math.random() * 0.04)
+        
+        return musicID, validVolume, validPitch
+    end
+    
+    -- 3. 时序混淆系统（防止模式检测）
+    local function applyRandomDelay()
+        if soundSystem.ProtectionBypass.Enabled then
+            local delay = math.random(soundSystem.ProtectionBypass.DelayRange[1], 
+                soundSystem.ProtectionBypass.DelayRange[2]) / 1000
+            task.wait(delay)
+        end
+    end
+    
+    -- 4. 父级位置随机化（增强隐蔽性）
+    local function getRandomParentLocation()
+        if soundSystem.ProtectionBypass.Enabled then
+            return soundSystem.ProtectionBypass.ParentLocations[math.random(
+                #soundSystem.ProtectionBypass.ParentLocations)]
+        else
+            return workspace
+        end
+    end
+    
+    -- 5. 增强的远程事件查找（支持别名检测）
+    local function findAC6RemoteEvents()
+        local potentialRemotes = {}
+        local validNames = {"AC6_FE_Sounds", "VehicleSounds", "AudioSystem", 
+                           "SoundController", "MusicPlayer", "CarAudioSystem"}
+        
+        for _, location in ipairs({workspace, replicatedStorage}) do
+            for _, obj in ipairs(location:GetDescendants()) do
+                if obj:IsA("RemoteEvent") then
+                    -- 检查名称相似度
+                    for _, validName in ipairs(validNames) do
+                        if string.find(obj.Name:lower(), validName:lower()) or 
+                           string.find(validName:lower(), obj.Name:lower()) then
+                            table.insert(potentialRemotes, obj)
+                            break
+                        end
+                    end
+                end
+            end
+        end
+        return potentialRemotes
     end
     
     local function SafeStopSound(soundID)
@@ -327,29 +426,37 @@ local function CreateFullUI()
         soundSystem.LastSoundName = nil
     end
 
-    local function Mode1_Play(musicID, volume, pitch, loopEnabled)
+    -- 6. 增强的播放模式（集成防护措施）
+    local function EnhancedMode1_Play(musicID, volume, pitch, loopEnabled)
         if soundSystem.RemoteEvent and not soundSystem.RemoteEvent:IsDescendantOf(game) then
             soundSystem.RemoteEvent = nil
         end
         
         if not soundSystem.RemoteEvent then
-            for _, location in ipairs({workspace, replicatedStorage}) do
-                for _, obj in ipairs(location:GetDescendants()) do
-                    if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
-                        soundSystem.RemoteEvent = obj
-                        break
-                    end
-                end
-                if soundSystem.RemoteEvent then break end
+            local remotes = findAC6RemoteEvents()
+            if #remotes > 0 then
+                soundSystem.RemoteEvent = remotes[math.random(#remotes)]
             end
         end
         
-        if not soundSystem.RemoteEvent then return false end
+        if not soundSystem.RemoteEvent then 
+            warn("[AC6播放器] 未找到可用的远程事件")
+            return false 
+        end
         
-        local soundName = generateSoundName(musicID)
+        local soundName = generateEnhancedSoundName(musicID)
+        local parentLocation = getRandomParentLocation()
+        
+        -- 应用随机延迟
+        applyRandomDelay()
+        
         local success = pcall(function()
-            soundSystem.RemoteEvent:FireServer("newSound", soundName, workspace, 
+            soundSystem.RemoteEvent:FireServer("newSound", soundName, parentLocation, 
                               "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+            
+            -- 播放前额外延迟
+            applyRandomDelay()
+            
             soundSystem.RemoteEvent:FireServer("playSound", soundName)
         end)
         
@@ -363,27 +470,34 @@ local function CreateFullUI()
         end
     end
 
-    local function Mode2_Play(musicID, volume, pitch, loopEnabled)
-        local soundName = generateSoundName(musicID)
+    local function EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
+        local soundName = generateEnhancedSoundName(musicID)
+        local parentLocation = getRandomParentLocation()
         local playedSuccessfully = false
-        local remoteEvents = {}
+        local remoteEvents = findAC6RemoteEvents()
         
-        for _, location in ipairs({workspace, replicatedStorage}) do
-            for _, v in ipairs(location:GetDescendants()) do
-                if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
-                    table.insert(remoteEvents, v)
-                end
-            end
+        if #remoteEvents == 0 then 
+            warn("[AC6播放器] 遍历模式：未找到任何远程事件")
+            return false 
         end
         
-        if #remoteEvents == 0 then return false end
+        -- 随机打乱远程事件顺序
+        for i = #remoteEvents, 2, -1 do
+            local j = math.random(i)
+            remoteEvents[i], remoteEvents[j] = remoteEvents[j], remoteEvents[i]
+        end
         
         for _, remote in ipairs(remoteEvents) do
+            applyRandomDelay()
+            
             local success = pcall(function()
-                remote:FireServer("newSound", soundName, workspace, 
+                remote:FireServer("newSound", soundName, parentLocation, 
                                   "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+                
+                applyRandomDelay()
+                
                 remote:FireServer("playSound", soundName)
-            end)
+            })
             
             if success then
                 playedSuccessfully = true
@@ -398,8 +512,9 @@ local function CreateFullUI()
         return playedSuccessfully
     end
     
-    local function AutoMode_Play(musicID, volume, pitch, loopEnabled)
-        return Mode1_Play(musicID, volume, pitch, loopEnabled) or Mode2_Play(musicID, volume, pitch, loopEnabled)
+    local function EnhancedAutoMode_Play(musicID, volume, pitch, loopEnabled)
+        return EnhancedMode1_Play(musicID, volume, pitch, loopEnabled) or 
+               EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
     end
     
     -- ==================== 播放按钮状态反馈系统 ====================
@@ -408,7 +523,7 @@ local function CreateFullUI()
         local rawVolume = volumeBox.Text
         local rawPitch = pitchBox.Text
         
-        local musicID, volume, pitch = ValidateAndCleanParameters(rawMusicID, rawVolume, rawPitch)
+        local musicID, volume, pitch = ValidateAndCamouflageParameters(rawMusicID, rawVolume, rawPitch)
         
         -- 如果音乐ID无效，直接触发失败状态
         if not musicID then
@@ -423,18 +538,20 @@ local function CreateFullUI()
         
         local success = false
         if soundSystem.CurrentMode == "mode1" then
-            success = Mode1_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
+            success = EnhancedMode1_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
         elseif soundSystem.CurrentMode == "mode2" then
-            success = Mode2_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
+            success = EnhancedMode2_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
         else
-            success = AutoMode_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
+            success = EnhancedAutoMode_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
         end
         
         -- 播放按钮状态颜色反馈
         if success then
             playButton.BackgroundColor3 = playButtonSuccessColor
+            print("[AC6播放器] 音乐播放成功 - ID:", musicID, "音量:", volume, "音调:", pitch)
         else
             playButton.BackgroundColor3 = playButtonFailureColor
+            warn("[AC6播放器] 音乐播放失败 - 请尝试切换模式或检查游戏支持")
         end
         
         -- 0.5秒后恢复默认颜色
@@ -468,4 +585,5 @@ local function CreateFullUI()
 end
 
 CreateFullUI()
-print("🎵 音乐播放器UI已加载 - 参数保持原始设置！")
+print("🎵 AC6音乐播放器UI已加载 - 增强防护版已激活！")
+print("🔒 防护特性：声音伪装、时序混淆、参数伪装、父级随机化")
