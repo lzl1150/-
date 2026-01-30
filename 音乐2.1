@@ -4,12 +4,11 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 local tweenService = game:GetService("TweenService")
 local runService = game:GetService("RunService")
 
--- 等待PlayerGui加载
-if not player:FindFirstChild("PlayerGui") then
-    player:WaitForChild("PlayerGui")
+if not player:FindFirstChild("PlayerGui") then 
+    player:WaitForChild("PlayerGui") 
 end
 
--- 1. 添加圆角效果函数
+-- 添加圆角效果的函数
 local function ApplyRoundedCorners(uiElement, cornerRadius)
     local uiCorner = Instance.new("UICorner")
     uiCorner.CornerRadius = UDim.new(0, cornerRadius or 8)
@@ -17,9 +16,9 @@ local function ApplyRoundedCorners(uiElement, cornerRadius)
     return uiCorner
 end
 
--- 2. 【修复】增强的描边效果函数 - 修正了高光层
+-- 修改点：将高光效果改为紫色辉光效果
 local function ApplyEnhancedShadowEffect(uiElement, isMainFrame)
-    -- 基础描边
+    -- 基础描边（保持原有半透明效果）
     local baseStroke = Instance.new("UIStroke")
     baseStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     baseStroke.Color = Color3.fromRGB(0, 0, 0)
@@ -27,24 +26,44 @@ local function ApplyEnhancedShadowEffect(uiElement, isMainFrame)
     baseStroke.Thickness = 2
     baseStroke.Parent = uiElement
 
-    -- 仅为mainFrame添加高光效果
+    -- 仅为mainFrame添加高级紫色辉光效果
     if isMainFrame then
-        local highlightStroke = Instance.new("UIStroke")
-        highlightStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        highlightStroke.Color = Color3.fromRGB(255, 255, 255) -- 纯白色高光
-        highlightStroke.Transparency = 0.9
-        highlightStroke.Thickness = 3
-        highlightStroke.Parent = uiElement
+        -- 内层辉光：深紫色基础
+        local innerGlow = Instance.new("UIStroke")
+        innerGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        innerGlow.Color = Color3.fromRGB(70, 0, 110)  -- 深紫色
+        innerGlow.Transparency = 0.7
+        innerGlow.Thickness = 4
+        innerGlow.Parent = uiElement
         
-        -- 存储高光引用以便后续控制
-        uiElement:SetAttribute("HighlightEffect", highlightStroke)
-        return highlightStroke
+        -- 中层辉光：中等紫色
+        local midGlow = Instance.new("UIStroke")
+        midGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        midGlow.Color = Color3.fromRGB(120, 0, 200)   -- 中紫色
+        midGlow.Transparency = 0.8
+        midGlow.Thickness = 6
+        midGlow.Parent = uiElement
+        
+        -- 外层辉光：亮紫色外晕
+        local outerGlow = Instance.new("UIStroke")
+        outerGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        outerGlow.Color = Color3.fromRGB(180, 80, 255)  -- 亮紫色
+        outerGlow.Transparency = 0.85
+        outerGlow.Thickness = 8
+        outerGlow.Parent = uiElement
+        
+        -- 存储辉光引用以便后续控制
+        uiElement:SetAttribute("InnerGlow", innerGlow)
+        uiElement:SetAttribute("MidGlow", midGlow)
+        uiElement:SetAttribute("OuterGlow", outerGlow)
+        
+        return {innerGlow, midGlow, outerGlow}
     end
     
     return baseStroke
 end
 
--- 3. 【补全】陀螺仪高光控制器
+-- 修改点：更新陀螺仪控制器以处理多层辉光效果
 local GyroHighlightController = {
     Enabled = false,
     Sensitivity = 0.4,
@@ -64,10 +83,8 @@ end
 
 function GyroHighlightController:GetTiltData()
     if self.Enabled then
-        local success, gyroState = pcall(function()
-            return userInputService:GetGyroState()
-        end)
-        if success and gyroState then
+        local gyroState = userInputService:GetGyroState()
+        if gyroState then
             return Vector2.new(
                 math.clamp(gyroState.Rotation.X * self.Sensitivity, -1, 1),
                 math.clamp(gyroState.Rotation.Y * self.Sensitivity, -1, 1)
@@ -84,189 +101,43 @@ function GyroHighlightController:GetTiltData()
     return Vector2.new(relativePos.X, relativePos.Y)
 end
 
--- 【补全】之前缺失的关键函数
+-- 修改点：更新辉光效果函数，处理多层辉光
 function GyroHighlightController:UpdateHighlightEffect(uiElement)
     if not uiElement then return end
     
-    local highlightEffect = uiElement:GetAttribute("HighlightEffect")
-    if not highlightEffect then return end
+    -- 获取所有辉光层
+    local innerGlow = uiElement:GetAttribute("InnerGlow")
+    local midGlow = uiElement:GetAttribute("MidGlow")
+    local outerGlow = uiElement:GetAttribute("OuterGlow")
     
-    -- 获取倾斜数据
+    if not innerGlow or not midGlow or not outerGlow then return end
+    
+    -- 获取倾斜数据并平滑过渡
     self.TargetTilt = self:GetTiltData()
     self.CurrentTilt = self.CurrentTilt:Lerp(self.TargetTilt, 0.1)
     
     -- 计算倾斜强度
-    local tiltIntensity = (math.abs(self.CurrentTilt.X) + math.abs(self.CurrentTilt.Y)) / 2
+    local tiltIntensity = math.abs(self.CurrentTilt.X) + math.abs(self.CurrentTilt.Y)
     
-    -- 根据倾斜度动态调整高光
-    local dynamicTransparency = 0.9 - (tiltIntensity * self.MaxTiltEffect)
-    local dynamicThickness = 3 + (tiltIntensity * 2)
+    -- 根据倾斜度动态调整多层辉光效果
+    local dynamicFactor = tiltIntensity * self.MaxTiltEffect
     
-    -- 应用动态效果
-    highlightEffect.Transparency = math.clamp(dynamicTransparency, 0.7, 0.95)
-    highlightEffect.Thickness = math.clamp(dynamicThickness, 3, 5)
+    -- 内层辉光调整：变化较小，保持基础效果
+    innerGlow.Transparency = 0.7 - (dynamicFactor * 0.1)
+    innerGlow.Thickness = 4 + (dynamicFactor * 1)
+    
+    -- 中层辉光调整：中等变化
+    midGlow.Transparency = 0.8 - (dynamicFactor * 0.15)
+    midGlow.Thickness = 6 + (dynamicFactor * 1.5)
+    
+    -- 外层辉光调整：变化最明显，创造动态感
+    outerGlow.Transparency = 0.85 - (dynamicFactor * 0.2)
+    outerGlow.Thickness = 8 + (dynamicFactor * 2)
 end
 
 -- 初始化陀螺仪控制器
 GyroHighlightController:Initialize()
 
--- 4. 【补全】核心音乐播放功能
-local soundSystem = {
-    LoopEnabled = true,
-    ActiveSounds = {},
-    RemoteEvent = nil,
-    CurrentMode = "auto",
-    ModeNames = {auto = "智能模式", mode1 = "缓存模式", mode2 = "遍历模式"},
-    ModeColors = {
-        auto = Color3.fromRGB(150, 100, 220),
-        mode1 = Color3.fromRGB(100, 180, 120),
-        mode2 = Color3.fromRGB(220, 140, 100)
-    },
-    LastSoundName = nil,
-    TwinMode = false
-}
-
--- 生成声音名称的函数
-local function generateEnhancedSoundName(musicID)
-    local prefixes = {"EngineSound", "Vehicleengine", "AmbientTrack", "DEV", "EnvironmentSFX"}
-    local suffixes = {"System", "suffer", "Manager", "Player", "Source", "Device"}
-    local numbers = {"001", "02", "3", "004", "5"}
-    return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..numbers[math.random(#numbers)]
-end
-
--- 参数验证与清理
-local function ValidateAndCleanParameters(rawMusicID, rawVolume, rawPitch)
-    local musicID = tostring(rawMusicID):gsub("%D+", "")
-    if #musicID < 6 then
-        return nil, nil, nil
-    end
-    local volume = tonumber(rawVolume) or 1
-    local pitch = tonumber(rawPitch) or 1
-    return musicID, math.clamp(volume, 0.1, 100), math.clamp(pitch, 0.1, 100)
-end
-
--- 安全停止声音
-local function SafeStopSound(soundID)
-    local stopped = false
-    for _, location in ipairs({workspace, replicatedStorage}) do
-        for _, obj in ipairs(location:GetDescendants()) do
-            if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
-                pcall(function()
-                    obj:FireServer("stopSound", soundID)
-                    stopped = true
-                end)
-            end
-        end
-    end
-    return stopped
-end
-
--- 停止所有声音
-local function StopAllSounds()
-    if #soundSystem.ActiveSounds == 0 then return end
-    
-    local soundsToStop = {}
-    for _, soundID in ipairs(soundSystem.ActiveSounds) do
-        table.insert(soundsToStop, soundID)
-    end
-    
-    for _, soundID in ipairs(soundsToStop) do
-        SafeStopSound(soundID)
-    end
-    
-    soundSystem.ActiveSounds = {}
-    soundSystem.LastSoundName = nil
-end
-
--- 播放模式实现
-local function EnhancedMode1_Play(musicID, volume, pitch, loopEnabled)
-    if soundSystem.RemoteEvent and not soundSystem.RemoteEvent:IsDescendantOf(game) then
-        soundSystem.RemoteEvent = nil
-    end
-    
-    if not soundSystem.RemoteEvent then
-        for _, location in ipairs({workspace, replicatedStorage}) do
-            for _, obj in ipairs(location:GetDescendants()) do
-                if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
-                    soundSystem.RemoteEvent = obj
-                    break
-                end
-            end
-            if soundSystem.RemoteEvent then break end
-        end
-    end
-    
-    if not soundSystem.RemoteEvent then 
-        warn("[AC6播放器] 未找到AC6_FE_Sounds远程事件")
-        return false 
-    end
-    
-    local soundName = generateEnhancedSoundName(musicID)
-    local success = pcall(function()
-        soundSystem.RemoteEvent:FireServer("newSound", soundName, workspace, 
-                          "rbxassetid://"..musicID, pitch, volume, loopEnabled)
-        soundSystem.RemoteEvent:FireServer("playSound", soundName)
-    end)
-    
-    if success then
-        table.insert(soundSystem.ActiveSounds, soundName)
-        soundSystem.LastSoundName = soundName
-        return true
-    else
-        soundSystem.RemoteEvent = nil
-        return false
-    end
-end
-
-local function EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
-    local soundName = generateEnhancedSoundName(musicID)
-    local playedSuccessfully = false
-    local remoteEvents = {}
-    
-    for _, location in ipairs({workspace, replicatedStorage}) do
-        for _, v in ipairs(location:GetDescendants()) do
-            if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
-                table.insert(remoteEvents, v)
-            end
-        end
-    end
-    
-    if #remoteEvents == 0 then 
-        warn("[AC6播放器] 遍历模式：未找到任何AC6远程事件")
-        return false 
-    end
-    
-    -- 随机打乱顺序
-    for i = #remoteEvents, 2, -1 do
-        local j = math.random(i)
-        remoteEvents[i], remoteEvents[j] = remoteEvents[j], remoteEvents[i]
-    end
-    
-    for _, remote in ipairs(remoteEvents) do
-        local success = pcall(function()
-            remote:FireServer("newSound", soundName, workspace, 
-                              "rbxassetid://"..musicID, pitch, volume, loopEnabled)
-            remote:FireServer("playSound", soundName)
-        end)
-        if success then
-            playedSuccessfully = true
-            if not soundSystem.TwinMode then break end
-        end
-    end
-    
-    if playedSuccessfully then
-        table.insert(soundSystem.ActiveSounds, soundName)
-        soundSystem.LastSoundName = soundName
-    end
-    return playedSuccessfully
-end
-
-local function EnhancedAutoMode_Play(musicID, volume, pitch, loopEnabled)
-    return EnhancedMode1_Play(musicID, volume, pitch, loopEnabled) or 
-           EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
-end
-
--- 5. 创建完整的UI
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "MusicPlayerUI_"..math.random(1000,9999)
@@ -284,7 +155,7 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = screenGui
     
-    -- 主容器渐变
+    -- 主容器渐变效果
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(85, 85, 90)),
@@ -294,16 +165,19 @@ local function CreateFullUI()
     gradient.Parent = mainFrame
     
     ApplyRoundedCorners(mainFrame, 12)
-    ApplyEnhancedShadowEffect(mainFrame, true) -- 启用高光
+    -- 修改点：应用紫色辉光效果到主框架
+    ApplyEnhancedShadowEffect(mainFrame, true)
 
     -- 标题栏
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, -5.1, 0, 30)
     titleBar.Position = UDim2.new(0, 3.5, 0, 2.5)
     titleBar.BackgroundColor3 = Color3.fromRGB(115, 115, 125)
+    titleBar.BackgroundTransparency = 0
     titleBar.BorderSizePixel = 0
     titleBar.Parent = mainFrame
     
+    -- 标题栏渐变
     local titleGradient = Instance.new("UIGradient")
     titleGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(75, 105, 185)),
@@ -449,7 +323,22 @@ local function CreateFullUI()
     mainFrame.Active = true
     mainFrame.Draggable = true
 
-    -- 6. 【补全】UI交互逻辑
+    -- 音频控制系统
+    local soundSystem = {
+        LoopEnabled = true,
+        ActiveSounds = {},
+        RemoteEvent = nil,
+        CurrentMode = "auto",
+        ModeNames = {auto = "智能模式", mode1 = "缓存模式", mode2 = "遍历模式"},
+        ModeColors = {
+            auto = Color3.fromRGB(150, 100, 220),
+            mode1 = Color3.fromRGB(100, 180, 120),
+            mode2 = Color3.fromRGB(220, 140, 100)
+        },
+        LastSoundName = nil,
+        TwinMode = false
+    }
+    
     local function UpdateModeButton()
         modeButton.Text = soundSystem.ModeNames[soundSystem.CurrentMode]
         modeButton.BackgroundColor3 = soundSystem.ModeColors[soundSystem.CurrentMode]
@@ -473,6 +362,141 @@ local function CreateFullUI()
     
     UpdateModeButton()
     UpdateTwinModeButton()
+    
+    -- 音乐控制功能
+    local function generateEnhancedSoundName(musicID)
+        local prefixes = {"EngineSound", "Vehicleengine", "AmbientTrack", "DEV", "EnvironmentSFX"}
+        local suffixes = {"System", "suffer", "Manager", "Player", "Source", "Device"}
+        local numbers = {"001", "02", "3", "004", "5"}
+        return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..numbers[math.random(#numbers)]
+    end
+
+    local function ValidateAndCleanParameters(rawMusicID, rawVolume, rawPitch)
+        local musicID = tostring(rawMusicID):gsub("%D+", "")
+        if #musicID < 6 then
+            return nil, nil, nil
+        end
+        local volume = tonumber(rawVolume) or 1
+        local pitch = tonumber(rawPitch) or 1
+        return musicID, math.clamp(volume, 0.1, 100), math.clamp(pitch, 0.1, 100)
+    end
+
+    local function SafeStopSound(soundID)
+        local stopped = false
+        for _, location in ipairs({workspace, replicatedStorage}) do
+            for _, obj in ipairs(location:GetDescendants()) do
+                if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
+                    pcall(function()
+                        obj:FireServer("stopSound", soundID)
+                        stopped = true
+                    end)
+                end
+            end
+        end
+        return stopped
+    end
+
+    local function StopAllSounds()
+        if #soundSystem.ActiveSounds == 0 then return end
+        
+        local soundsToStop = {}
+        for _, soundID in ipairs(soundSystem.ActiveSounds) do
+            table.insert(soundsToStop, soundID)
+        end
+        
+        for _, soundID in ipairs(soundsToStop) do
+            SafeStopSound(soundID)
+        end
+        
+        soundSystem.ActiveSounds = {}
+        soundSystem.LastSoundName = nil
+    end
+
+    local function EnhancedMode1_Play(musicID, volume, pitch, loopEnabled)
+        if soundSystem.RemoteEvent and not soundSystem.RemoteEvent:IsDescendantOf(game) then
+            soundSystem.RemoteEvent = nil
+        end
+        
+        if not soundSystem.RemoteEvent then
+            for _, location in ipairs({workspace, replicatedStorage}) do
+                for _, obj in ipairs(location:GetDescendants()) do
+                    if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
+                        soundSystem.RemoteEvent = obj
+                        break
+                    end
+                end
+                if soundSystem.RemoteEvent then break end
+            end
+        end
+        
+        if not soundSystem.RemoteEvent then 
+            warn("[AC6播放器] 未找到AC6_FE_Sounds远程事件")
+            return false 
+        end
+        
+        local soundName = generateEnhancedSoundName(musicID)
+        local success = pcall(function()
+            soundSystem.RemoteEvent:FireServer("newSound", soundName, workspace, 
+                              "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+            soundSystem.RemoteEvent:FireServer("playSound", soundName)
+        end)
+        
+        if success then
+            table.insert(soundSystem.ActiveSounds, soundName)
+            soundSystem.LastSoundName = soundName
+            return true
+        else
+            soundSystem.RemoteEvent = nil
+            return false
+        end
+    end
+
+    local function EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
+        local soundName = generateEnhancedSoundName(musicID)
+        local playedSuccessfully = false
+        local remoteEvents = {}
+        
+        for _, location in ipairs({workspace, replicatedStorage}) do
+            for _, v in ipairs(location:GetDescendants()) do
+                if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
+                    table.insert(remoteEvents, v)
+                end
+            end
+        end
+        
+        if #remoteEvents == 0 then 
+            warn("[AC6播放器] 遍历模式：未找到任何AC6远程事件")
+            return false 
+        end
+        
+        for i = #remoteEvents, 2, -1 do
+            local j = math.random(i)
+            remoteEvents[i], remoteEvents[j] = remoteEvents[j], remoteEvents[i]
+        end
+        
+        for _, remote in ipairs(remoteEvents) do
+            local success = pcall(function()
+                remote:FireServer("newSound", soundName, workspace, 
+                                  "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+                remote:FireServer("playSound", soundName)
+            end)
+            if success then
+                playedSuccessfully = true
+                if not soundSystem.TwinMode then break end
+            end
+        end
+        
+        if playedSuccessfully then
+            table.insert(soundSystem.ActiveSounds, soundName)
+            soundSystem.LastSoundName = soundName
+        end
+        return playedSuccessfully
+    end
+    
+    local function EnhancedAutoMode_Play(musicID, volume, pitch, loopEnabled)
+        return EnhancedMode1_Play(musicID, volume, pitch, loopEnabled) or 
+               EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
+    end
     
     -- 播放控制
     local function handlePlayback()
@@ -527,7 +551,7 @@ local function CreateFullUI()
             Color3.fromRGB(70, 150, 200) or Color3.fromRGB(120, 120, 140)
     end)
 
-    -- 7. 【补全】高光效果更新循环
+    -- 辉光效果更新循环
     local connection
     connection = runService.Heartbeat:Connect(function()
         GyroHighlightController:UpdateHighlightEffect(mainFrame)
@@ -551,6 +575,5 @@ end)
 if not success then
     warn("❌ UI创建失败: " .. tostring(result))
 else
-    print("✅ AC6音乐播放器UI已加载 - 动态高光效果已启用！")
+    print("✅ AC6音乐播放器UI已加载 - 高级紫色辉光效果已启用！")
 end
-
