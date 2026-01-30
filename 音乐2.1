@@ -3,7 +3,9 @@ local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local tweenService = game:GetService("TweenService")
 
-if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
+if not player:FindFirstChild("PlayerGui") then 
+    player:WaitForChild("PlayerGui") 
+end
 
 -- 添加圆角效果的函数
 local function ApplyRoundedCorners(uiElement, cornerRadius)
@@ -13,25 +15,94 @@ local function ApplyRoundedCorners(uiElement, cornerRadius)
     return uiCorner
 end
 
--- 修改：将描边效果改为高级紫色辉光效果
-local function ApplyShadowEffect(uiElement)
-    -- 基础描边（保持原有结构，但改为紫色）
+-- 优化后的辉光效果函数 - 减小内部元素厚度，优化外层辉光细腻度
+local function ApplyEnhancedGlowEffect(uiElement, elementType)
+    -- 基础描边
     local baseStroke = Instance.new("UIStroke")
     baseStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    baseStroke.Color = Color3.fromRGB(80, 30, 120)  -- 深紫色
-    baseStroke.Transparency = 0.7  -- 降低透明度使颜色更明显
-    baseStroke.Thickness = 2
+    baseStroke.Color = Color3.fromRGB(0, 0, 0)
+    baseStroke.Transparency = 0.8
+    baseStroke.Thickness = 1  -- 减小基础描边厚度
     baseStroke.Parent = uiElement
+
+    -- 根据元素类型应用不同的辉光效果
+    if elementType == "mainFrame" then
+        -- 主框架：三层细腻辉光效果
+        local innerGlow = Instance.new("UIStroke")
+        innerGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        innerGlow.Color = Color3.fromRGB(90, 40, 130)  -- 调整颜色使过渡更平滑
+        innerGlow.Transparency = 0.75
+        innerGlow.Thickness = 3  -- 减小厚度
+        innerGlow.Parent = uiElement
+        
+        local midGlow = Instance.new("UIStroke")
+        midGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        midGlow.Color = Color3.fromRGB(130, 60, 190)   -- 中间色调更接近
+        midGlow.Transparency = 0.82  -- 调整透明度减少分层感
+        midGlow.Thickness = 5  -- 减小厚度
+        midGlow.Parent = uiElement
+        
+        local outerGlow = Instance.new("UIStroke")
+        outerGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        outerGlow.Color = Color3.fromRGB(160, 80, 220)  -- 亮紫色，色调更统一
+        outerGlow.Transparency = 0.88  -- 提高透明度使过渡更自然
+        outerGlow.Thickness = 7  -- 减小厚度
+        outerGlow.Parent = uiElement
+        
+        -- 存储辉光引用以便动态控制
+        uiElement:SetAttribute("InnerGlow", innerGlow)
+        uiElement:SetAttribute("MidGlow", midGlow)
+        uiElement:SetAttribute("OuterGlow", outerGlow)
+        
+        return {innerGlow, midGlow, outerGlow}
+    else
+        -- 内部元素（输入框、按钮等）：单层薄辉光
+        local elementGlow = Instance.new("UIStroke")
+        elementGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        elementGlow.Color = Color3.fromRGB(100, 50, 160)  -- 统一的紫色调
+        elementGlow.Transparency = 0.85
+        elementGlow.Thickness = 1.5  -- 显著减小内部元素辉光厚度
+        elementGlow.Parent = uiElement
+        
+        uiElement:SetAttribute("ElementGlow", elementGlow)
+        return elementGlow
+    end
+end
+
+-- 辉光效果控制器（优化版）
+local GlowEffectController = {
+    Enabled = true,
+    Intensity = 0.8,  -- 降低整体强度
+    PulseSpeed = 1.5,  -- 减慢脉动速度
+    PulseIntensity = 0.2  -- 减小脉动强度
+}
+
+function GlowEffectController:UpdateGlowEffect(uiElement)
+    if not uiElement or not self.Enabled then return end
     
-    -- 添加辉光层（高级紫色效果）
-    local glowStroke = Instance.new("UIStroke")
-    glowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    glowStroke.Color = Color3.fromRGB(150, 64, 255)  -- 亮紫色辉光
-    glowStroke.Transparency = 0.8  -- 适当的透明度
-    glowStroke.Thickness = 4  -- 比基础描边稍厚
-    glowStroke.Parent = uiElement
+    -- 主框架辉光效果
+    local innerGlow = uiElement:GetAttribute("InnerGlow")
+    local midGlow = uiElement:GetAttribute("MidGlow")
+    local outerGlow = uiElement:GetAttribute("OuterGlow")
     
-    return baseStroke
+    if innerGlow and midGlow and outerGlow then
+        -- 创建更温和的脉动效果
+        local time = tick()
+        local pulse = math.sin(time * self.PulseSpeed) * self.PulseIntensity
+        
+        -- 动态调整辉光强度（更细微的变化）
+        local dynamicIntensity = self.Intensity + pulse
+        
+        -- 应用更细腻的动态效果
+        innerGlow.Transparency = 0.75 - (dynamicIntensity * 0.08)
+        innerGlow.Thickness = 3 + (dynamicIntensity * 0.5)
+        
+        midGlow.Transparency = 0.82 - (dynamicIntensity * 0.12)
+        midGlow.Thickness = 5 + (dynamicIntensity * 0.8)
+        
+        outerGlow.Transparency = 0.88 - (dynamicIntensity * 0.15)
+        outerGlow.Thickness = 7 + (dynamicIntensity * 1)
+    end
 end
 
 local function CreateFullUI()
@@ -61,7 +132,7 @@ local function CreateFullUI()
     gradient.Parent = mainFrame
     
     ApplyRoundedCorners(mainFrame, 12)
-    ApplyShadowEffect(mainFrame)
+    ApplyEnhancedGlowEffect(mainFrame, "mainFrame")  -- 主框架使用三层辉光
     
     -- ==================== 标题栏美化 ====================
     local titleBar = Instance.new("Frame")
@@ -82,7 +153,7 @@ local function CreateFullUI()
     titleGradient.Parent = titleBar
     
     ApplyRoundedCorners(titleBar, 8)
-    ApplyShadowEffect(titleBar)
+    ApplyEnhancedGlowEffect(titleBar, "element")  -- 内部元素使用薄辉光
     
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -45, 1, 0)
@@ -108,7 +179,7 @@ local function CreateFullUI()
     closeButton.BorderSizePixel = 0
     closeButton.Parent = titleBar
     ApplyRoundedCorners(closeButton, 6)
-    ApplyShadowEffect(closeButton)
+    ApplyEnhancedGlowEffect(closeButton, "element")  -- 薄辉光
     
     closeButton.MouseButton1Click:Connect(function()
         screenGui:Destroy()
@@ -126,7 +197,7 @@ local function CreateFullUI()
     twinButton.BorderSizePixel = 0
     twinButton.Parent = titleBar
     ApplyRoundedCorners(twinButton, 6)
-    ApplyShadowEffect(twinButton)
+    ApplyEnhancedGlowEffect(twinButton, "element")  -- 薄辉光
 
     -- ==================== 输入框美化 ====================
     local function CreateInputBox(posY, placeholder, sizeX, posX)
@@ -146,7 +217,7 @@ local function CreateFullUI()
         inputGradient.Parent = container
         
         ApplyRoundedCorners(container, 6)
-        ApplyShadowEffect(container)
+        ApplyEnhancedGlowEffect(container, "element")  -- 薄辉光
         
         local box = Instance.new("TextBox")
         box.Size = UDim2.new(1, -10, 1, -6)
@@ -198,7 +269,7 @@ local function CreateFullUI()
         end)
         
         ApplyRoundedCorners(btn, 8)
-        ApplyShadowEffect(btn)
+        ApplyEnhancedGlowEffect(btn, "element")  -- 薄辉光
         return btn
     end
 
@@ -225,7 +296,7 @@ local function CreateFullUI()
         btn.Parent = mainFrame
         
         ApplyRoundedCorners(btn, 6)
-        ApplyShadowEffect(btn)
+        ApplyEnhancedGlowEffect(btn, "element")  -- 薄辉光
         return btn
     end
 
@@ -295,9 +366,9 @@ local function CreateFullUI()
     
     -- 1. 参数伪装：增强的声音名称生成系统（防止模式检测）
     local function generateEnhancedSoundName(musicID)
-        local prefixes = {"EngineSound", "Vehicleengine", "AmbientTrack", "DEV", "EnvironmentSFX"}
-        local suffixes = {"System", "suffer", "Manager", "Player", "Source", "Device"}
-        local numbers = {"001", "02", "3", "004", "5"}
+        local prefixes = {"EngineSound", "vehicleengine", "AmbientTrack", "RadioStream", "EnvironmentSFX"}
+        local suffixes = {"System", ".", "Shutter", "Player", "Source", "Device"}
+        local numbers = {"01", "02", "003", "4", "005"}
         return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..numbers[math.random(#numbers)]
     end
     
@@ -377,7 +448,6 @@ local function CreateFullUI()
         local success = pcall(function()
             soundSystem.RemoteEvent:FireServer("newSound", soundName, workspace, 
                               "rbxassetid://"..musicID, pitch, volume, loopEnabled)
-            
             soundSystem.RemoteEvent:FireServer("playSound", soundName)
         end)
         
@@ -391,7 +461,7 @@ local function CreateFullUI()
         end
     end
 
-    -- 修改后的遍历模式（M模式）- 移除随机延迟和停止机制
+    -- 修改后的遍历模式（M模式）
     local function EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
         local soundName = generateEnhancedSoundName(musicID)
         local playedSuccessfully = false
@@ -420,13 +490,10 @@ local function CreateFullUI()
             local success = pcall(function()
                 remote:FireServer("newSound", soundName, workspace, 
                                   "rbxassetid://"..musicID, pitch, volume, loopEnabled)
-                
                 remote:FireServer("playSound", soundName)
             end)
-            
             if success then
                 playedSuccessfully = true
-                
                 if not soundSystem.TwinMode then break end
             end
         end
@@ -499,6 +566,20 @@ local function CreateFullUI()
             Color3.fromRGB(70, 150, 200) or Color3.fromRGB(120, 120, 140)
     end)
 
+    -- ==================== 辉光效果更新循环 ====================
+    local runService = game:GetService("RunService")
+    local connection
+    connection = runService.Heartbeat:Connect(function()
+        GlowEffectController:UpdateGlowEffect(mainFrame)
+    end)
+
+    -- 清理函数
+    screenGui.Destroying:Connect(function()
+        if connection then
+            connection:Disconnect()
+        end
+    end)
+
     return screenGui
 end
 
@@ -510,5 +591,5 @@ end)
 if not success then
     warn("❌ UI创建失败: " .. tostring(result))
 else
-    print("✅ AC6音乐播放器UI已加载 - 紫色辉光效果已启用！")
+    print("✅ 优化版紫色辉光音乐播放器UI已加载！")
 end
