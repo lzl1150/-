@@ -319,7 +319,7 @@ local function CreateFullUI()
         return strategies[math.random(#strategies)]()
     end
     
-    -- 2. 利用时间差：时序混淆系统（防止模式检测）
+    -- 2. 利用时间差：时序混淆系统（防止模式检测）- 但M模式不使用
     local function applyRandomDelay()
         if soundSystem.ProtectionConfig.Enabled then
             local delay = math.random(soundSystem.ProtectionConfig.DelayRange[1], 
@@ -403,7 +403,7 @@ local function CreateFullUI()
         soundSystem.LastSoundName = nil
     end
 
-    -- 增强的播放模式（集成所有防护措施）
+    -- 增强的播放模式（集成防护措施）
     local function EnhancedMode1_Play(musicID, volume, pitch, loopEnabled)
         if soundSystem.RemoteEvent and not soundSystem.RemoteEvent:IsDescendantOf(game) then
             soundSystem.RemoteEvent = nil
@@ -428,7 +428,7 @@ local function CreateFullUI()
         
         local soundName = generateEnhancedSoundName(musicID)
         
-        -- 应用随机延迟（利用时间差）
+        -- 应用随机延迟（利用时间差）- 模式1使用
         applyRandomDelay()
         
         local success = pcall(function()
@@ -454,6 +454,7 @@ local function CreateFullUI()
         end
     end
 
+    -- 修改后的遍历模式（M模式）- 移除随机延迟
     local function EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
         local soundName = generateEnhancedSoundName(musicID)
         local playedSuccessfully = false
@@ -478,23 +479,22 @@ local function CreateFullUI()
             remoteEvents[i], remoteEvents[j] = remoteEvents[j], remoteEvents[i]
         end
         
+        
         for _, remote in ipairs(remoteEvents) do
-            applyRandomDelay()
-            
+            -- M模式不使用随机延迟，保持即时请求
             local success = pcall(function()
                 remote:FireServer("newSound", soundName, workspace, 
                                   "rbxassetid://"..musicID, pitch, volume, loopEnabled)
                 
-                applyRandomDelay()
-                
+                -- M模式不使用播放前延迟
                 remote:FireServer("playSound", soundName)
             end)
             
             if success then
                 -- 尝试属性锁定保护
                 attemptSoundProtection(soundName)
-                
                 playedSuccessfully = true
+                
                 if not soundSystem.TwinMode then break end
             end
         end
@@ -578,5 +578,5 @@ end)
 if not success then
     warn("❌ UI创建失败: " .. tostring(result))
 else
-    print("✅ AC6音乐播放器UI已加载 - 三重防护策略已激活！")
+    print("✅ AC6音乐播放器UI已加载 - M模式已优化为即时请求！")
 end
