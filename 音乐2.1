@@ -26,7 +26,7 @@ end
 
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = " TouchUI"..math.random(1000,9999)
+    screenGui.Name = "TouchUI_"..math.random(1000,9999)
     screenGui.ResetOnSpawn = false
     screenGui.DisplayOrder = 999
     screenGui.Parent = player.PlayerGui
@@ -289,14 +289,14 @@ local function CreateFullUI()
     
     -- 1. 参数伪装：增强的声音名称生成系统（防止模式检测）
     local function generateNaturalName()
-        local prefixes = {"EngineSound", "Vehicleengine", "AmbientTrack", "DEV", "EnvironmentSFX"}
-        local suffixes = {"System", "suffer", "Manager", "Player", "Source", "Device"}
-        local numbers = {"001", "02", "3", "004", "5"}
+        local prefixes = {"EngineSound", "vehicleengine", "AmbientTrack", "RadioStream", "EnvironmentSFX"}
+        local suffixes = {"System", "Controller", "Suffer", "Player", "Source", "Device"}
+        local numbers = {"01", "02", "003", "4", "005"}
         return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..numbers[math.random(#numbers)]
     end
     
     local function generateMusicIDName(musicID)
-        local patterns = {"Audio_%s", "Sound_%s", "Track_%s", "Media_%s"}
+        local patterns = {"Beep_%s", "Sound_%s", "Track_%s", "Media_%s"}
         return string.format(patterns[math.random(#patterns)], musicID:sub(-6))
     end
     
@@ -454,7 +454,7 @@ local function CreateFullUI()
         end
     end
 
-    -- 修改后的遍历模式（M模式）- 移除随机延迟
+    -- 修改后的遍历模式（M模式）- 移除随机延迟和停止机制
     local function EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
         local soundName = generateEnhancedSoundName(musicID)
         local playedSuccessfully = false
@@ -479,6 +479,8 @@ local function CreateFullUI()
             remoteEvents[i], remoteEvents[j] = remoteEvents[j], remoteEvents[i]
         end
         
+        -- 已移除：播放前停止同名旧声音的机制
+        -- SafeStopSound(soundName)  -- 这一行已被移除
         
         for _, remote in ipairs(remoteEvents) do
             -- M模式不使用随机延迟，保持即时请求
@@ -578,5 +580,5 @@ end)
 if not success then
     warn("❌ UI创建失败: " .. tostring(result))
 else
-    print("✅ AC6音乐播放器UI已加载 - M模式已优化为即时请求！")
+    print("✅ AC6音乐播放器UI已加载 - M模式已移除播放前停止机制！")
 end
