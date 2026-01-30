@@ -4,8 +4,9 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 local tweenService = game:GetService("TweenService")
 local runService = game:GetService("RunService")
 
-if not player:FindFirstChild("PlayerGui") then 
-    player:WaitForChild("PlayerGui") 
+-- 等待PlayerGui加载
+if not player:FindFirstChild("PlayerGui") then
+    player:WaitForChild("PlayerGui")
 end
 
 -- 添加圆角效果的函数
@@ -16,9 +17,9 @@ local function ApplyRoundedCorners(uiElement, cornerRadius)
     return uiCorner
 end
 
--- 高级紫色辉光效果函数 - 替换原来的高光效果
+-- 高级紫色辉光效果函数
 local function ApplyPurpleGlowEffect(uiElement, isMainFrame)
-    -- 基础描边（保持原有半透明效果）
+    -- 基础描边
     local baseStroke = Instance.new("UIStroke")
     baseStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     baseStroke.Color = Color3.fromRGB(0, 0, 0)
@@ -63,7 +64,7 @@ local function ApplyPurpleGlowEffect(uiElement, isMainFrame)
     return baseStroke
 end
 
--- 辉光效果控制器（简化版，移除陀螺仪相关代码）
+-- 辉光效果控制器
 local GlowEffectController = {
     Enabled = true,
     Intensity = 1.0,
@@ -80,7 +81,7 @@ function GlowEffectController:UpdateGlowEffect(uiElement)
     
     if not innerGlow or not midGlow or not outerGlow then return end
     
-    -- 创建脉动效果（呼吸效果）
+    -- 创建脉动效果
     local time = tick()
     local pulse = math.sin(time * self.PulseSpeed) * self.PulseIntensity
     
@@ -100,6 +101,7 @@ function GlowEffectController:UpdateGlowEffect(uiElement)
 end
 
 local function CreateFullUI()
+    -- 创建ScreenGui
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "MusicPlayerUI_"..math.random(1000,9999)
     screenGui.ResetOnSpawn = false
@@ -111,22 +113,22 @@ local function CreateFullUI()
     end)
     
     if not success then
-        warn("将ScreenGui添加到PlayerGui失败: " .. tostring(err))
+        warn("UI父级设置失败: " .. tostring(err))
         return nil
     end
 
-    -- 主容器（保持原有颜色不变）
+    -- 主容器
     local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 300, 0, 200)
-    mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+    mainFrame.Size = UDim2.new(0, 320, 0, 220)
+    mainFrame.Position = UDim2.new(0.5, -160, 0.5, -110)
     mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(120, 120, 130)  -- 保持原有背景色
+    mainFrame.BackgroundColor3 = Color3.fromRGB(120, 120, 130)
     mainFrame.BackgroundTransparency = 0
     mainFrame.BorderSizePixel = 0
     mainFrame.Visible = true
     mainFrame.Parent = screenGui
-    
-    -- 主容器渐变效果（保持原有渐变）
+
+    -- 主容器渐变效果
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(85, 85, 90)),
@@ -136,18 +138,27 @@ local function CreateFullUI()
     gradient.Parent = mainFrame
     
     ApplyRoundedCorners(mainFrame, 12)
-    ApplyPurpleGlowEffect(mainFrame, true)  -- 启用高级紫色辉光效果
+    ApplyPurpleGlowEffect(mainFrame, true)
 
-    -- 标题栏（保持原有颜色不变）
+    -- 创建内容容器（修复关键：将所有子元素放在这个容器内）
+    local contentContainer = Instance.new("Frame")
+    contentContainer.Size = UDim2.new(1, 0, 1, 0)
+    contentContainer.Position = UDim2.new(0, 0, 0, 0)
+    contentContainer.BackgroundTransparency = 1
+    contentContainer.BorderSizePixel = 0
+    contentContainer.Visible = true
+    contentContainer.Parent = mainFrame
+
+    -- 标题栏
     local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, -5.1, 0, 30)
-    titleBar.Position = UDim2.new(0, 3.5, 0, 2.5)
-    titleBar.BackgroundColor3 = Color3.fromRGB(115, 115, 125)  -- 保持原有颜色
+    titleBar.Size = UDim2.new(1, -20, 0, 35)
+    titleBar.Position = UDim2.new(0, 10, 0, 10)
+    titleBar.BackgroundColor3 = Color3.fromRGB(115, 115, 125)
     titleBar.BackgroundTransparency = 0
     titleBar.BorderSizePixel = 0
-    titleBar.Parent = mainFrame
+    titleBar.Visible = true
+    titleBar.Parent = contentContainer
     
-    -- 标题栏渐变（保持原有渐变）
     local titleGradient = Instance.new("UIGradient")
     titleGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(75, 105, 185)),
@@ -157,10 +168,10 @@ local function CreateFullUI()
     titleGradient.Parent = titleBar
     
     ApplyRoundedCorners(titleBar, 8)
-    ApplyPurpleGlowEffect(titleBar, false)  -- 标题栏不启用辉光
+    ApplyPurpleGlowEffect(titleBar, false)
     
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -45, 1, 0)
+    titleLabel.Size = UDim2.new(1, -50, 1, 0)
     titleLabel.Position = UDim2.new(0, 10, 0, 0)
     titleLabel.Text = "MUSIC PLAYER♪[made by余客]"
     titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -168,19 +179,21 @@ local function CreateFullUI()
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.BackgroundTransparency = 1
+    titleLabel.Visible = true
     titleLabel.Parent = titleBar
 
-    -- 控制按钮（保持原有颜色不变）
+    -- 控制按钮
     local closeButton = Instance.new("TextButton")
     closeButton.Size = UDim2.new(0, 25, 0, 25)
-    closeButton.Position = UDim2.new(1, -7, 0.5, -1)
+    closeButton.Position = UDim2.new(1, -30, 0.5, 0)
     closeButton.AnchorPoint = Vector2.new(1, 0.5)
     closeButton.Text = "×"
     closeButton.Font = Enum.Font.GothamBold
     closeButton.TextSize = 18
     closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeButton.BackgroundColor3 = Color3.fromRGB(220, 80, 80)  -- 保持原有红色
+    closeButton.BackgroundColor3 = Color3.fromRGB(220, 80, 80)
     closeButton.BorderSizePixel = 0
+    closeButton.Visible = true
     closeButton.Parent = titleBar
     ApplyRoundedCorners(closeButton, 6)
     ApplyPurpleGlowEffect(closeButton, false)
@@ -191,26 +204,28 @@ local function CreateFullUI()
 
     local twinButton = Instance.new("TextButton")
     twinButton.Size = UDim2.new(0, 25, 0, 25)
-    twinButton.Position = UDim2.new(1, -35, 0.5, -1)
+    twinButton.Position = UDim2.new(1, -60, 0.5, 0)
     twinButton.AnchorPoint = Vector2.new(1, 0.5)
     twinButton.Text = "M"
     twinButton.Font = Enum.Font.GothamBold
     twinButton.TextSize = 12
     twinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    twinButton.BackgroundColor3 = Color3.fromRGB(100, 100, 180)  -- 保持原有颜色
+    twinButton.BackgroundColor3 = Color3.fromRGB(100, 100, 180)
     twinButton.BorderSizePixel = 0
+    twinButton.Visible = true
     twinButton.Parent = titleBar
     ApplyRoundedCorners(twinButton, 6)
     ApplyPurpleGlowEffect(twinButton, false)
 
-    -- 输入框函数（保持原有颜色不变）
+    -- 输入框函数
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local container = Instance.new("Frame")
-        container.Size = UDim2.new(sizeX, 0, 0, 28)
+        container.Size = UDim2.new(sizeX, 0, 0, 30)
         container.Position = UDim2.new(posX, 0, posY, 0)
-        container.BackgroundColor3 = Color3.fromRGB(50, 50, 65)  -- 保持原有颜色
+        container.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
         container.BorderSizePixel = 0
-        container.Parent = mainFrame
+        container.Visible = true
+        container.Parent = contentContainer
         
         ApplyRoundedCorners(container, 6)
         ApplyPurpleGlowEffect(container, false)
@@ -224,19 +239,22 @@ local function CreateFullUI()
         box.Font = Enum.Font.Gotham
         box.TextSize = 12
         box.PlaceholderColor3 = Color3.fromRGB(180, 180, 200)
+        box.Text = ""
+        box.Visible = true
         box.Parent = container
         
         return box
     end
 
+    -- 创建输入框
     local musicIDBox = CreateInputBox(0.2, "输入音乐ID...", 0.9, 0.05)
-    local volumeBox = CreateInputBox(0.4, "音量 0.1-100", 0.4, 0.05)
-    local pitchBox = CreateInputBox(0.4, "音调 0.1-100", 0.4, 0.55)
+    local volumeBox = CreateInputBox(0.45, "音量 0.1-100", 0.4, 0.05)
+    local pitchBox = CreateInputBox(0.45, "音调 0.1-100", 0.4, 0.55)
 
-    -- 功能按钮函数（保持原有颜色不变）
+    -- 功能按钮函数
     local function CreateStyledButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(sizeX, 0, 0, 32)
+        btn.Size = UDim2.new(sizeX, 0, 0, 35)
         btn.Position = UDim2.new(posX, 0, posY, 0)
         btn.Text = text
         btn.Font = Enum.Font.GothamSemibold
@@ -245,25 +263,25 @@ local function CreateFullUI()
         btn.BackgroundColor3 = color
         btn.AutoButtonColor = true
         btn.BorderSizePixel = 0
-        btn.Parent = mainFrame
+        btn.Visible = true
+        btn.Parent = contentContainer
         
         ApplyRoundedCorners(btn, 8)
         ApplyPurpleGlowEffect(btn, false)
         return btn
     end
 
-    -- 播放按钮颜色定义（保持原有颜色不变）
     local playButtonDefaultColor = Color3.fromRGB(0, 162, 255)
     local playButtonSuccessColor = Color3.fromRGB(70, 200, 100)
     local playButtonFailureColor = Color3.fromRGB(220, 80, 80)
     
-    local playButton = CreateStyledButton("播放", 0.05, 0.65, 0.4, playButtonDefaultColor)
-    local stopButton = CreateStyledButton("停止", 0.55, 0.65, 0.4, Color3.fromRGB(220, 80, 80))
+    local playButton = CreateStyledButton("播放", 0.05, 0.7, 0.4, playButtonDefaultColor)
+    local stopButton = CreateStyledButton("停止", 0.55, 0.7, 0.4, Color3.fromRGB(220, 80, 80))
 
-    -- 切换按钮函数（保持原有颜色不变）
+    -- 切换按钮函数
     local function CreateToggleButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(sizeX, 0, 0, 24)
+        btn.Size = UDim2.new(sizeX, 0, 0, 25)
         btn.Position = UDim2.new(posX, 0, posY, 0)
         btn.Text = text
         btn.Font = Enum.Font.Gotham
@@ -272,7 +290,8 @@ local function CreateFullUI()
         btn.BackgroundColor3 = color
         btn.AutoButtonColor = true
         btn.BorderSizePixel = 0
-        btn.Parent = mainFrame
+        btn.Visible = true
+        btn.Parent = contentContainer
         
         ApplyRoundedCorners(btn, 6)
         ApplyPurpleGlowEffect(btn, false)
@@ -282,19 +301,20 @@ local function CreateFullUI()
     local loopToggle = CreateToggleButton("循环: ON", 0.55, 0.85, 0.4, Color3.fromRGB(70, 150, 200))
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(150, 100, 220))
 
-    -- 分隔线（保持原有颜色不变）
+    -- 分隔线
     local separator = Instance.new("Frame")
     separator.Size = UDim2.new(1, -20, 0, 1)
-    separator.Position = UDim2.new(0, 10, 0.58, 0)
+    separator.Position = UDim2.new(0, 10, 0.65, 0)
     separator.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
     separator.BorderSizePixel = 0
-    separator.Parent = mainFrame
+    separator.Visible = true
+    separator.Parent = contentContainer
 
     -- 拖动系统
     mainFrame.Active = true
     mainFrame.Draggable = true
 
-    -- 音频控制系统（完全保持不变）
+    -- 音频控制系统（保持不变）
     local soundSystem = {
         LoopEnabled = true,
         ActiveSounds = {},
@@ -334,7 +354,7 @@ local function CreateFullUI()
     UpdateModeButton()
     UpdateTwinModeButton()
     
-    -- 音乐控制功能（完全保持不变）
+    -- 音乐控制功能（保持不变）
     local function generateEnhancedSoundName(musicID)
         local prefixes = {"EngineSound", "Vehicleengine", "AmbientTrack", "DEV", "EnvironmentSFX"}
         local suffixes = {"System", "suffer", "Manager", "Player", "Source", "Device"}
@@ -469,7 +489,7 @@ local function CreateFullUI()
                EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
     end
     
-    -- 播放控制（完全保持不变）
+    -- 播放控制
     local function handlePlayback()
         local rawMusicID = musicIDBox.Text
         local rawVolume = volumeBox.Text
@@ -522,7 +542,7 @@ local function CreateFullUI()
             Color3.fromRGB(70, 150, 200) or Color3.fromRGB(120, 120, 140)
     end)
 
-    -- 辉光效果更新循环（简化版，移除陀螺仪相关代码）
+    -- 辉光效果更新循环
     local connection
     connection = runService.Heartbeat:Connect(function()
         GlowEffectController:UpdateGlowEffect(mainFrame)
@@ -540,6 +560,7 @@ local function CreateFullUI()
 end
 
 -- 安全执行UI创建
+print("🚀 开始创建UI...")
 local success, result = pcall(function()
     return CreateFullUI()
 end)
