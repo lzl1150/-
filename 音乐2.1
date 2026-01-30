@@ -291,7 +291,7 @@ local function CreateFullUI()
     local function generateNaturalName()
         local prefixes = {"EngineSound", "Vehicleengine", "AmbientTrack", "DEV", "EnvironmentSFX"}
         local suffixes = {"System", "suffer", "Manager", "Player", "Source", "Device"}
-        --local numbers = {"001", "002", "003", "004", "005"}
+        local numbers = {"001", "02", "3", "004", "5"}
         return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..numbers[math.random(#numbers)]
     end
     
