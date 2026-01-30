@@ -2,7 +2,6 @@ local player = game:GetService("Players").LocalPlayer
 local userInputService = game:GetService("UserInputService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local tweenService = game:GetService("TweenService")
-local runService = game:GetService("RunService")
 
 if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
 
@@ -329,26 +328,7 @@ local function CreateFullUI()
         end
     end
     
-    -- 3. 参数伪装：参数验证与清理系统
-    local function ValidateAndCamouflageParameters(musicID, volume, pitch)
-        -- 清理音乐ID格式
-        musicID = tostring(musicID):gsub("%D+", "")
-        
-        -- 严格长度检查
-        if #musicID < 6 then
-            return nil
-        else
-            musicID = musicID:sub(1, 10)
-        end
-        
-        -- 使用原始默认值（音量1，音调1）
-        volume = math.clamp(tonumber(volume) or 1, 0.1, 100)
-        pitch = math.clamp(tonumber(pitch) or 1, 0.1, 10)
-        
-        return musicID, volume, pitch
-    end
-    
-    -- 4. 属性锁定：尝试保护创建的声音实例
+    -- 3. 属性锁定：尝试保护创建的声音实例
     local function attemptSoundProtection(soundName)
         if not soundSystem.ProtectionConfig.Enabled then return end
         
@@ -373,6 +353,23 @@ local function CreateFullUI()
                 end)
             end
         end)
+    end
+    
+    -- 参数验证与清理函数
+    local function ValidateAndCleanParameters(musicID, volume, pitch)
+        -- 清理音乐ID格式
+        musicID = tostring(musicID):gsub("%D+", "")
+        
+        -- 严格长度检查
+        if #musicID < 6 then
+            return nil
+        end
+        
+        -- 使用原始默认值（音量1，音调1）
+        volume = tonumber(volume) or 1
+        pitch = tonumber(pitch) or 1
+        
+        return musicID, volume, pitch
     end
     
     local function SafeStopSound(soundID)
@@ -516,19 +513,17 @@ local function CreateFullUI()
     
     -- ==================== 播放按钮状态反馈系统 ====================
     local function handlePlayback()
-        local rawMusicID = musicIDBox.Text:gsub("%D+", "")
+        local rawMusicID = musicIDBox.Text
         local rawVolume = volumeBox.Text
         local rawPitch = pitchBox.Text
         
-        local musicID, volume, pitch = ValidateAndCamouflageParameters(rawMusicID, rawVolume, rawPitch)
+        local musicID, volume, pitch = ValidateAndCleanParameters(rawMusicID, rawVolume, rawPitch)
         
         -- 如果音乐ID无效，直接触发失败状态
         if not musicID then
             playButton.BackgroundColor3 = playButtonFailureColor
             task.delay(0.5, function()
-                local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-                local tween = tweenService:Create(playButton, tweenInfo, {BackgroundColor3 = playButtonDefaultColor})
-                tween:Play()
+                playButton.BackgroundColor3 = playButtonDefaultColor
             end)
             return
         end
@@ -545,17 +540,13 @@ local function CreateFullUI()
         -- 播放按钮状态颜色反馈
         if success then
             playButton.BackgroundColor3 = playButtonSuccessColor
-            print("[AC6播放器] 音乐播放成功 - ID:", musicID)
         else
             playButton.BackgroundColor3 = playButtonFailureColor
-            warn("[AC6播放器] 音乐播放失败 - 请尝试切换模式或检查游戏支持")
         end
         
         -- 0.5秒后恢复默认颜色
         task.delay(0.5, function()
-            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local tween = tweenService:Create(playButton, tweenInfo, {BackgroundColor3 = playButtonDefaultColor})
-            tween:Play()
+            playButton.BackgroundColor3 = playButtonDefaultColor
         end)
     end
 
@@ -563,9 +554,7 @@ local function CreateFullUI()
         StopAllSounds()
         stopButton.BackgroundColor3 = Color3.fromRGB(250, 100, 100)
         task.delay(0.5, function()
-            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local tween = tweenService:Create(stopButton, tweenInfo, {BackgroundColor3 = Color3.fromRGB(220, 80, 80)})
-            tween:Play()
+            stopButton.BackgroundColor3 = Color3.fromRGB(220, 80, 80)
         end)
     end
     
@@ -581,6 +570,13 @@ local function CreateFullUI()
     return screenGui
 end
 
-CreateFullUI()
-print("🎵 AC6音乐播放器UI已加载 - 三重防护策略已激活！")
-print("🔒 激活防护：属性锁定 + 时间差利用 + 参数伪装")
+-- 安全执行UI创建
+local success, result = pcall(function()
+    return CreateFullUI()
+end)
+
+if not success then
+    warn("❌ UI创建失败: " .. tostring(result))
+else
+    print("✅ AC6音乐播放器UI已加载 - 三重防护策略已激活！")
+end
