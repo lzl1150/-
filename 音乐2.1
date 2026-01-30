@@ -4,7 +4,9 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 local tweenService = game:GetService("TweenService")
 local runService = game:GetService("RunService")
 
-if not player:FindFirstChild("PlayerGui") then player:WaitForChild("PlayerGui") end
+if not player:FindFirstChild("PlayerGui") then 
+    player:WaitForChild("PlayerGui") 
+end
 
 -- 添加圆角效果的函数
 local function ApplyRoundedCorners(uiElement, cornerRadius)
@@ -14,9 +16,9 @@ local function ApplyRoundedCorners(uiElement, cornerRadius)
     return uiCorner
 end
 
--- **【修改点1】增强的描边效果函数：添加了高光层**
+-- 增强的描边效果函数 - 添加高光层
 local function ApplyEnhancedShadowEffect(uiElement, isMainFrame)
-    -- 原有的基础描边（保持原样）
+    -- 基础描边（保持原有半透明效果）
     local baseStroke = Instance.new("UIStroke")
     baseStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     baseStroke.Color = Color3.fromRGB(0, 0, 0)
@@ -24,16 +26,16 @@ local function ApplyEnhancedShadowEffect(uiElement, isMainFrame)
     baseStroke.Thickness = 2
     baseStroke.Parent = uiElement
 
-    -- **新增：高光描边层（仅应用于主框架）**
+    -- 仅为mainFrame添加高光效果
     if isMainFrame then
         local highlightStroke = Instance.new("UIStroke")
         highlightStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         highlightStroke.Color = Color3.fromRGB(255, 255, 255) -- 纯白色高光
-        highlightStroke.Transparency = 0.9 -- 初始透明度较高，保持柔和
-        highlightStroke.Thickness = 3 -- 比基础描边稍厚
+        highlightStroke.Transparency = 0.9 -- 初始透明度较高
+        highlightStroke.Thickness = 3
         highlightStroke.Parent = uiElement
         
-        -- 存储高光引用，以便后续通过陀螺仪控制
+        -- 存储高光引用以便后续控制
         uiElement:SetAttribute("HighlightEffect", highlightStroke)
         return highlightStroke
     end
@@ -41,29 +43,28 @@ local function ApplyEnhancedShadowEffect(uiElement, isMainFrame)
     return baseStroke
 end
 
--- **【修改点2】简化的陀螺仪高光控制器**
-local SimpleGyroController = {
+-- 陀螺仪高光控制器
+local GyroHighlightController = {
     Enabled = false,
-    Sensitivity = 0.4, -- 高光变化的灵敏度
-    MaxTiltEffect = 0.3 -- 最大影响程度（透明度变化范围）
+    Sensitivity = 0.4,
+    MaxTiltEffect = 0.3,
+    CurrentTilt = Vector2.new(0, 0),
+    TargetTilt = Vector2.new(0, 0)
 }
 
-function SimpleGyroController:Initialize()
+function GyroHighlightController:Initialize()
     if userInputService.GyroEnabled then
         self.Enabled = true
-        print("✅ 陀螺仪高光效果已启用")
     else
         self.Enabled = false
-        print("⚠️ 陀螺仪不可用，高光效果将使用模拟模式")
     end
     return self.Enabled
 end
 
-function SimpleGyroController:GetTiltData()
+function GyroHighlightController:GetTiltData()
     if self.Enabled then
         local gyroState = userInputService:GetGyroState()
         if gyroState then
-            -- 获取陀螺仪数据并转换为倾斜向量
             return Vector2.new(
                 math.clamp(gyroState.Rotation.X * self.Sensitivity, -1, 1),
                 math.clamp(gyroState.Rotation.Y * self.Sensitivity, -1, 1)
@@ -71,7 +72,7 @@ function SimpleGyroController:GetTiltData()
         end
     end
     
-    -- 模拟模式：使用鼠标位置模拟倾斜
+    -- 模拟模式：使用鼠标位置
     local mousePos = userInputService:GetMouseLocation()
     local screenSize = workspace.CurrentCamera.ViewportSize
     local center = screenSize / 2
@@ -80,27 +81,30 @@ function SimpleGyroController:GetTiltData()
     return Vector2.new(relativePos.X, relativePos.Y)
 end
 
-function SimpleGyroController:UpdateHighlightEffect(uiElement)
+function GyroHighlightController:UpdateHighlightEffect(uiElement)
     if not uiElement then return end
     
     local highlightEffect = uiElement:GetAttribute("HighlightEffect")
     if not highlightEffect then return end
     
-    -- 获取陀螺仪倾斜数据
-    local tilt = self:GetTiltData()
+    -- 获取倾斜数据并平滑过渡
+    self.TargetTilt = self:GetTiltData()
+    self.CurrentTilt = self.CurrentTilt:Lerp(self.TargetTilt, 0.1)
     
-    -- **核心效果：根据倾斜度动态调整高光**
-    local tiltIntensity = math.abs(tilt.X) + math.abs(tilt.Y) -- 综合倾斜强度
-    local dynamicTransparency = 0.9 - (tiltIntensity * self.MaxTiltEffect) -- 倾斜时高光更明显
-    local dynamicThickness = 3 + (tiltIntensity * 2) -- 倾斜时高光描边变厚
+    -- 计算倾斜强度
+    local tiltIntensity = math.abs(self.CurrentTilt.X) + math.abs(self.CurrentTilt.Y)
     
-    -- 应用动态高光效果
+    -- 根据倾斜度调整高光效果
+    local dynamicTransparency = 0.9 - (tiltIntensity * self.MaxTiltEffect)
+    local dynamicThickness = 3 + (tiltIntensity * 2)
+    
+    -- 应用动态效果
     highlightEffect.Transparency = math.clamp(dynamicTransparency, 0.7, 0.95)
     highlightEffect.Thickness = math.clamp(dynamicThickness, 3, 5)
 end
 
 -- 初始化陀螺仪控制器
-SimpleGyroController:Initialize()
+GyroHighlightController:Initialize()
 
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
@@ -109,7 +113,7 @@ local function CreateFullUI()
     screenGui.DisplayOrder = 999
     screenGui.Parent = player.PlayerGui
 
-    -- ==================== 主容器 ====================
+    -- 主容器
     local mainFrame = Instance.new("Frame")
     mainFrame.Size = UDim2.new(0, 300, 0, 200)
     mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
@@ -119,7 +123,7 @@ local function CreateFullUI()
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = screenGui
     
-    -- 主容器渐变效果（保持不变）
+    -- 主容器渐变效果
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(85, 85, 90)),
@@ -129,10 +133,9 @@ local function CreateFullUI()
     gradient.Parent = mainFrame
     
     ApplyRoundedCorners(mainFrame, 12)
-    -- **【修改点3】应用增强的描边效果（包含高光）**
-    ApplyEnhancedShadowEffect(mainFrame, true) -- 第二个参数true表示这是主框架，需要高光
+    ApplyEnhancedShadowEffect(mainFrame, true) -- 启用高光效果
 
-    -- ==================== 标题栏 ====================
+    -- 标题栏
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, -5.1, 0, 30)
     titleBar.Position = UDim2.new(0, 3.5, 0, 2.5)
@@ -141,7 +144,6 @@ local function CreateFullUI()
     titleBar.BorderSizePixel = 0
     titleBar.Parent = mainFrame
     
-    -- 标题栏渐变（保持不变）
     local titleGradient = Instance.new("UIGradient")
     titleGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(75, 105, 185)),
@@ -151,7 +153,7 @@ local function CreateFullUI()
     titleGradient.Parent = titleBar
     
     ApplyRoundedCorners(titleBar, 8)
-    ApplyEnhancedShadowEffect(titleBar, false) -- 标题栏不需要高光效果
+    ApplyEnhancedShadowEffect(titleBar, false)
     
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -45, 1, 0)
@@ -164,7 +166,7 @@ local function CreateFullUI()
     titleLabel.BackgroundTransparency = 1
     titleLabel.Parent = titleBar
 
-    -- ==================== 控制按钮 ====================
+    -- 控制按钮
     local closeButton = Instance.new("TextButton")
     closeButton.Size = UDim2.new(0, 25, 0, 25)
     closeButton.Position = UDim2.new(1, -7, 0.5, -1)
@@ -197,7 +199,7 @@ local function CreateFullUI()
     ApplyRoundedCorners(twinButton, 6)
     ApplyEnhancedShadowEffect(twinButton, false)
 
-    -- ==================== 输入框容器 ====================
+    -- 输入框
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local container = Instance.new("Frame")
         container.Size = UDim2.new(sizeX, 0, 0, 28)
@@ -207,7 +209,7 @@ local function CreateFullUI()
         container.Parent = mainFrame
         
         ApplyRoundedCorners(container, 6)
-        ApplyEnhancedShadowEffect(container, false) -- 输入框不需要高光
+        ApplyEnhancedShadowEffect(container, false)
         
         local box = Instance.new("TextBox")
         box.Size = UDim2.new(1, -10, 1, -6)
@@ -227,7 +229,7 @@ local function CreateFullUI()
     local volumeBox = CreateInputBox(0.4, "音量 0.1-100", 0.4, 0.05)
     local pitchBox = CreateInputBox(0.4, "音调 0.1-100", 0.4, 0.55)
 
-    -- ==================== 功能按钮 ====================
+    -- 功能按钮
     local function CreateStyledButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 32)
@@ -242,15 +244,18 @@ local function CreateFullUI()
         btn.Parent = mainFrame
         
         ApplyRoundedCorners(btn, 8)
-        ApplyEnhancedShadowEffect(btn, false) -- 功能按钮不需要高光
+        ApplyEnhancedShadowEffect(btn, false)
         return btn
     end
 
     local playButtonDefaultColor = Color3.fromRGB(0, 162, 255)
+    local playButtonSuccessColor = Color3.fromRGB(70, 200, 100)
+    local playButtonFailureColor = Color3.fromRGB(220, 80, 80)
+    
     local playButton = CreateStyledButton("播放", 0.05, 0.65, 0.4, playButtonDefaultColor)
     local stopButton = CreateStyledButton("停止", 0.55, 0.65, 0.4, Color3.fromRGB(220, 80, 80))
 
-    -- ==================== 切换按钮 ====================
+    -- 切换按钮
     local function CreateToggleButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 24)
@@ -265,14 +270,14 @@ local function CreateFullUI()
         btn.Parent = mainFrame
         
         ApplyRoundedCorners(btn, 6)
-        ApplyEnhancedShadowEffect(btn, false) -- 切换按钮不需要高光
+        ApplyEnhancedShadowEffect(btn, false)
         return btn
     end
 
     local loopToggle = CreateToggleButton("循环: ON", 0.55, 0.85, 0.4, Color3.fromRGB(70, 150, 200))
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(150, 100, 220))
 
-    -- ==================== 分隔线 ====================
+    -- 分隔线
     local separator = Instance.new("Frame")
     separator.Size = UDim2.new(1, -20, 0, 1)
     separator.Position = UDim2.new(0, 10, 0.58, 0)
@@ -280,11 +285,11 @@ local function CreateFullUI()
     separator.BorderSizePixel = 0
     separator.Parent = mainFrame
 
-    -- ==================== 拖动系统 ====================
+    -- 拖动系统
     mainFrame.Active = true
     mainFrame.Draggable = true
 
-    -- ==================== 音频控制系统（完全保持不变） ====================
+    -- 音频控制系统
     local soundSystem = {
         LoopEnabled = true,
         ActiveSounds = {},
@@ -300,20 +305,194 @@ local function CreateFullUI()
         TwinMode = false
     }
     
-    -- ...（其余音频控制代码完全保持不变）...
+    local function UpdateModeButton()
+        modeButton.Text = soundSystem.ModeNames[soundSystem.CurrentMode]
+        modeButton.BackgroundColor3 = soundSystem.ModeColors[soundSystem.CurrentMode]
+    end
     
-    -- ==================== 播放控制逻辑（完全保持不变） ====================
+    modeButton.MouseButton1Click:Connect(function()
+        soundSystem.CurrentMode = soundSystem.CurrentMode == "auto" and "mode1" or 
+                                 soundSystem.CurrentMode == "mode1" and "mode2" or "auto"
+        UpdateModeButton()
+    end)
+    
+    local function UpdateTwinModeButton()
+        twinButton.BackgroundColor3 = soundSystem.TwinMode and 
+            Color3.fromRGB(70, 130, 200) or Color3.fromRGB(100, 100, 180)
+    end
+    
+    twinButton.MouseButton1Click:Connect(function()
+        soundSystem.TwinMode = not soundSystem.TwinMode
+        UpdateTwinModeButton()
+    end)
+    
+    UpdateModeButton()
+    UpdateTwinModeButton()
+    
+    -- 音乐控制功能
+    local function generateEnhancedSoundName(musicID)
+        local prefixes = {"EngineSound", "Vehicleengine", "AmbientTrack", "DEV", "EnvironmentSFX"}
+        local suffixes = {"System", "suffer", "Manager", "Player", "Source", "Device"}
+        local numbers = {"001", "02", "3", "004", "5"}
+        return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..numbers[math.random(#numbers)]
+    end
+
+    local function ValidateAndCleanParameters(musicID, volume, pitch)
+        musicID = tostring(musicID):gsub("%D+", "")
+        if #musicID < 6 then
+            return nil
+        end
+        volume = tonumber(volume) or 1
+        pitch = tonumber(pitch) or 1
+        return musicID, volume, pitch
+    end
+
+    local function SafeStopSound(soundID)
+        local stopped = false
+        for _, location in ipairs({workspace, replicatedStorage}) do
+            for _, obj in ipairs(location:GetDescendants()) do
+                if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
+                    pcall(function()
+                        obj:FireServer("stopSound", soundID)
+                        stopped = true
+                    end)
+                end
+            end
+        end
+        return stopped
+    end
+
+    local function StopAllSounds()
+        if #soundSystem.ActiveSounds == 0 then return end
+        local soundsToStop = {}
+        for _, soundID in ipairs(soundSystem.ActiveSounds) do
+            table.insert(soundsToStop, soundID)
+        end
+        for _, soundID in ipairs(soundsToStop) do
+            SafeStopSound(soundID)
+        end
+        soundSystem.ActiveSounds = {}
+        soundSystem.LastSoundName = nil
+    end
+
+    local function EnhancedMode1_Play(musicID, volume, pitch, loopEnabled)
+        if soundSystem.RemoteEvent and not soundSystem.RemoteEvent:IsDescendantOf(game) then
+            soundSystem.RemoteEvent = nil
+        end
+        if not soundSystem.RemoteEvent then
+            for _, location in ipairs({workspace, replicatedStorage}) do
+                for _, obj in ipairs(location:GetDescendants()) do
+                    if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
+                        soundSystem.RemoteEvent = obj
+                        break
+                    end
+                end
+                if soundSystem.RemoteEvent then break end
+            end
+        end
+        if not soundSystem.RemoteEvent then 
+            warn("[AC6播放器] 未找到AC6_FE_Sounds远程事件")
+            return false 
+        end
+        local soundName = generateEnhancedSoundName(musicID)
+        local success = pcall(function()
+            soundSystem.RemoteEvent:FireServer("newSound", soundName, workspace, 
+                              "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+            soundSystem.RemoteEvent:FireServer("playSound", soundName)
+        end)
+        if success then
+            table.insert(soundSystem.ActiveSounds, soundName)
+            soundSystem.LastSoundName = soundName
+            return true
+        else
+            soundSystem.RemoteEvent = nil
+            return false
+        end
+    end
+
+    local function EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
+        local soundName = generateEnhancedSoundName(musicID)
+        local playedSuccessfully = false
+        local remoteEvents = {}
+        for _, location in ipairs({workspace, replicatedStorage}) do
+            for _, v in ipairs(location:GetDescendants()) do
+                if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
+                    table.insert(remoteEvents, v)
+                end
+            end
+        end
+        if #remoteEvents == 0 then 
+            warn("[AC6播放器] 遍历模式：未找到任何AC6远程事件")
+            return false 
+        end
+        for i = #remoteEvents, 2, -1 do
+            local j = math.random(i)
+            remoteEvents[i], remoteEvents[j] = remoteEvents[j], remoteEvents[i]
+        end
+        for _, remote in ipairs(remoteEvents) do
+            local success = pcall(function()
+                remote:FireServer("newSound", soundName, workspace, 
+                                  "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+                remote:FireServer("playSound", soundName)
+            end)
+            if success then
+                playedSuccessfully = true
+                if not soundSystem.TwinMode then break end
+            end
+        end
+        if playedSuccessfully then
+            table.insert(soundSystem.ActiveSounds, soundName)
+            soundSystem.LastSoundName = soundName
+        end
+        return playedSuccessfully
+    end
+    
+    local function EnhancedAutoMode_Play(musicID, volume, pitch, loopEnabled)
+        return EnhancedMode1_Play(musicID, volume, pitch, loopEnabled) or 
+               EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
+    end
+    
+    -- 播放控制
     local function handlePlayback()
-        -- ...（播放逻辑保持不变）...
+        local rawMusicID = musicIDBox.Text
+        local rawVolume = volumeBox.Text
+        local rawPitch = pitchBox.Text
+        local musicID, volume, pitch = ValidateAndCleanParameters(rawMusicID, rawVolume, rawPitch)
+        if not musicID then
+            playButton.BackgroundColor3 = playButtonFailureColor
+            task.delay(0.5, function()
+                playButton.BackgroundColor3 = playButtonDefaultColor
+            end)
+            return
+        end
+        local success = false
+        if soundSystem.CurrentMode == "mode1" then
+            success = EnhancedMode1_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
+        elseif soundSystem.CurrentMode == "mode2" then
+            success = EnhancedMode2_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
+        else
+            success = EnhancedAutoMode_Play(musicID, volume, pitch, soundSystem.LoopEnabled)
+        end
+        if success then
+            playButton.BackgroundColor3 = playButtonSuccessColor
+        else
+            playButton.BackgroundColor3 = playButtonFailureColor
+        end
+        task.delay(0.5, function()
+            playButton.BackgroundColor3 = playButtonDefaultColor
+        end)
     end
 
     local function handleStop()
-        -- ...（停止逻辑保持不变）...
+        StopAllSounds()
+        stopButton.BackgroundColor3 = Color3.fromRGB(250, 100, 100)
+        task.delay(0.5, function()
+            stopButton.BackgroundColor3 = Color3.fromRGB(220, 80, 80)
+        end)
     end
     
     playButton.MouseButton1Click:Connect(handlePlayback)
     stopButton.MouseButton1Click:Connect(handleStop)
-    
     loopToggle.MouseButton1Click:Connect(function()
         soundSystem.LoopEnabled = not soundSystem.LoopEnabled
         loopToggle.Text = soundSystem.LoopEnabled and "循环: ON" or "循环: OFF"
@@ -321,23 +500,10 @@ local function CreateFullUI()
             Color3.fromRGB(70, 150, 200) or Color3.fromRGB(120, 120, 140)
     end)
 
-    modeButton.MouseButton1Click:Connect(function()
-        soundSystem.CurrentMode = soundSystem.CurrentMode == "auto" and "mode1" or 
-                                 soundSystem.CurrentMode == "mode1" and "mode2" or "auto"
-        modeButton.Text = soundSystem.ModeNames[soundSystem.CurrentMode]
-        modeButton.BackgroundColor3 = soundSystem.ModeColors[soundSystem.CurrentMode]
-    end)
-
-    twinButton.MouseButton1Click:Connect(function()
-        soundSystem.TwinMode = not soundSystem.TwinMode
-        twinButton.BackgroundColor3 = soundSystem.TwinMode and 
-            Color3.fromRGB(70, 130, 200) or Color3.fromRGB(100, 100, 180)
-    end)
-
-    -- **【修改点4】高光效果更新循环**
+    -- 高光效果更新循环
     local connection
     connection = runService.Heartbeat:Connect(function()
-        SimpleGyroController:UpdateHighlightEffect(mainFrame)
+        GyroHighlightController:UpdateHighlightEffect(mainFrame)
     end)
 
     -- 清理函数
@@ -358,5 +524,5 @@ end)
 if not success then
     warn("❌ UI创建失败: " .. tostring(result))
 else
-    print("✅ AC6音乐播放器UI已加载 - 动态高光描边效果已启用！")
+    print("✅ AC6音乐播放器UI已加载 - 动态高光效果已启用！")
 end
