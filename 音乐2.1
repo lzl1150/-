@@ -289,9 +289,9 @@ local function CreateFullUI()
     
     -- 1. 参数伪装：增强的声音名称生成系统（防止模式检测）
     local function generateNaturalName()
-        local prefixes = {"EngineSound", "VehicleAudio", "AmbientTrack", "RadioStream", "EnvironmentSFX"}
-        local suffixes = {"System", "Controller", "Manager", "Player", "Source", "Device"}
-        local numbers = {"001", "002", "003", "004", "005"}
+        local prefixes = {"EngineSound", "Vehicleengine", "AmbientTrack", "DEV", "EnvironmentSFX"}
+        local suffixes = {"System", "suffer", "Manager", "Player", "Source", "Device"}
+        --local numbers = {"001", "002", "003", "004", "005"}
         return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..numbers[math.random(#numbers)]
     end
     
