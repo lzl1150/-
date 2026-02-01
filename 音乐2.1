@@ -132,10 +132,10 @@ local function CreateFullUI()
         return nil
     end
 
-    -- 主容器
+    -- 主容器 - 恢复原始尺寸和位置
     local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 320, 0, 220)
-    mainFrame.Position = UDim2.new(0.5, -160, 0.5, -110)
+    mainFrame.Size = UDim2.new(0, 300, 0, 200)  -- 恢复原始尺寸
+    mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)  -- 恢复原始位置
     mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     mainFrame.BackgroundColor3 = Color3.fromRGB(120, 120, 130)
     mainFrame.BackgroundTransparency = 0
@@ -155,24 +155,15 @@ local function CreateFullUI()
     ApplyRoundedCorners(mainFrame, 12)
     ApplyEnhancedGlowEffect(mainFrame, "mainFrame")
 
-    -- 创建内容容器
-    local contentContainer = Instance.new("Frame")
-    contentContainer.Size = UDim2.new(1, 0, 1, 0)
-    contentContainer.Position = UDim2.new(0, 0, 0, 0)
-    contentContainer.BackgroundTransparency = 1
-    contentContainer.BorderSizePixel = 0
-    contentContainer.Visible = true
-    contentContainer.Parent = mainFrame
-
-    -- 标题栏
+    -- 标题栏 - 恢复原始尺寸和位置
     local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, -20, 0, 35)
-    titleBar.Position = UDim2.new(0, 10, 0, 10)
+    titleBar.Size = UDim2.new(1, -5.1, 0, 30)  -- 恢复原始尺寸
+    titleBar.Position = UDim2.new(0, 3.5, 0, 2.5)  -- 恢复原始位置
     titleBar.BackgroundColor3 = Color3.fromRGB(115, 115, 125)
     titleBar.BackgroundTransparency = 0
     titleBar.BorderSizePixel = 0
     titleBar.Visible = true
-    titleBar.Parent = contentContainer
+    titleBar.Parent = mainFrame
     
     local titleGradient = Instance.new("UIGradient")
     titleGradient.Color = ColorSequence.new({
@@ -183,12 +174,12 @@ local function CreateFullUI()
     titleGradient.Parent = titleBar
     
     ApplyRoundedCorners(titleBar, 8)
-    ApplyEnhancedGlowEffect(titleBar, false)
+    ApplyEnhancedGlowEffect(titleBar, "element")
     
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -50, 1, 0)
+    titleLabel.Size = UDim2.new(1, -45, 1, 0)
     titleLabel.Position = UDim2.new(0, 10, 0, 0)
-    titleLabel.Text = "MUSIC PLAYER♪[Boost Edition]"
+    titleLabel.Text = "MUSIC PLAYER♪[made by余客]"  -- 恢复原始标题
     titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
@@ -197,10 +188,10 @@ local function CreateFullUI()
     titleLabel.Visible = true
     titleLabel.Parent = titleBar
 
-    -- 控制按钮
+    -- 控制按钮 - 恢复原始位置
     local closeButton = Instance.new("TextButton")
     closeButton.Size = UDim2.new(0, 25, 0, 25)
-    closeButton.Position = UDim2.new(1, -30, 0.5, 0)
+    closeButton.Position = UDim2.new(1, -7, 0.5, -1)  -- 恢复原始位置
     closeButton.AnchorPoint = Vector2.new(1, 0.5)
     closeButton.Text = "×"
     closeButton.Font = Enum.Font.GothamBold
@@ -211,7 +202,7 @@ local function CreateFullUI()
     closeButton.Visible = true
     closeButton.Parent = titleBar
     ApplyRoundedCorners(closeButton, 6)
-    ApplyEnhancedGlowEffect(closeButton, false)
+    ApplyEnhancedGlowEffect(closeButton, "element")
     
     closeButton.MouseButton1Click:Connect(function()
         BoostProtectionManager:StopAllProtections()
@@ -220,7 +211,7 @@ local function CreateFullUI()
 
     local twinButton = Instance.new("TextButton")
     twinButton.Size = UDim2.new(0, 25, 0, 25)
-    twinButton.Position = UDim2.new(1, -60, 0.5, 0)
+    twinButton.Position = UDim2.new(1, -35, 0.5, -1)  -- 恢复原始位置
     twinButton.AnchorPoint = Vector2.new(1, 0.5)
     twinButton.Text = "M"
     twinButton.Font = Enum.Font.GothamBold
@@ -231,20 +222,20 @@ local function CreateFullUI()
     twinButton.Visible = true
     twinButton.Parent = titleBar
     ApplyRoundedCorners(twinButton, 6)
-    ApplyEnhancedGlowEffect(twinButton, false)
+    ApplyEnhancedGlowEffect(twinButton, "element")
 
-    -- 输入框函数
+    -- 输入框函数 - 恢复原始位置
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local container = Instance.new("Frame")
-        container.Size = UDim2.new(sizeX, 0, 0, 30)
+        container.Size = UDim2.new(sizeX, 0, 0, 28)  -- 恢复原始高度
         container.Position = UDim2.new(posX, 0, posY, 0)
         container.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
         container.BorderSizePixel = 0
         container.Visible = true
-        container.Parent = contentContainer
+        container.Parent = mainFrame
         
         ApplyRoundedCorners(container, 6)
-        ApplyEnhancedGlowEffect(container, false)
+        ApplyEnhancedGlowEffect(container, "element")
         
         local box = Instance.new("TextBox")
         box.Size = UDim2.new(1, -10, 1, -6)
@@ -262,15 +253,15 @@ local function CreateFullUI()
         return box
     end
 
-    -- 创建输入框
-    local musicIDBox = CreateInputBox(0.2, "输入音乐ID...", 0.9, 0.05)
-    local volumeBox = CreateInputBox(0.45, "音量 0.1-100", 0.4, 0.05)
-    local pitchBox = CreateInputBox(0.45, "音调 0.1-100", 0.4, 0.55)
+    -- 创建输入框 - 恢复原始位置
+    local musicIDBox = CreateInputBox(0.2, "输入音乐ID...", 0.9, 0.05)  -- 恢复原始位置
+    local volumeBox = CreateInputBox(0.4, "音量 0.1-100", 0.4, 0.05)   -- 恢复原始位置
+    local pitchBox = CreateInputBox(0.4, "音调 0.1-100", 0.4, 0.55)    -- 恢复原始位置
 
-    -- 功能按钮函数
+    -- 功能按钮函数 - 恢复原始位置
     local function CreateStyledButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(sizeX, 0, 0, 35)
+        btn.Size = UDim2.new(sizeX, 0, 0, 32)  -- 恢复原始高度
         btn.Position = UDim2.new(posX, 0, posY, 0)
         btn.Text = text
         btn.Font = Enum.Font.GothamSemibold
@@ -280,7 +271,7 @@ local function CreateFullUI()
         btn.AutoButtonColor = true
         btn.BorderSizePixel = 0
         btn.Visible = true
-        btn.Parent = contentContainer
+        btn.Parent = mainFrame
         
         btn.MouseEnter:Connect(function()
             local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -299,7 +290,7 @@ local function CreateFullUI()
         end)
         
         ApplyRoundedCorners(btn, 8)
-        ApplyEnhancedGlowEffect(btn, false)
+        ApplyEnhancedGlowEffect(btn, "element")
         return btn
     end
 
@@ -307,13 +298,13 @@ local function CreateFullUI()
     local playButtonSuccessColor = Color3.fromRGB(70, 200, 100)
     local playButtonFailureColor = Color3.fromRGB(220, 80, 80)
     
-    local playButton = CreateStyledButton("播放", 0.05, 0.7, 0.4, playButtonDefaultColor)
-    local stopButton = CreateStyledButton("停止", 0.55, 0.7, 0.4, Color3.fromRGB(220, 80, 80))
+    local playButton = CreateStyledButton("播放", 0.05, 0.65, 0.4, playButtonDefaultColor)  -- 恢复原始位置
+    local stopButton = CreateStyledButton("停止", 0.55, 0.65, 0.4, Color3.fromRGB(220, 80, 80))  -- 恢复原始位置
 
-    -- 切换按钮函数（调整尺寸以适应新布局）
+    -- 切换按钮函数 - 调整尺寸以适应新布局
     local function CreateToggleButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(sizeX, 0, 0, 25)
+        btn.Size = UDim2.new(sizeX, 0, 0, 24)
         btn.Position = UDim2.new(posX, 0, posY, 0)
         btn.Text = text
         btn.Font = Enum.Font.Gotham
@@ -323,26 +314,30 @@ local function CreateFullUI()
         btn.AutoButtonColor = true
         btn.BorderSizePixel = 0
         btn.Visible = true
-        btn.Parent = contentContainer
+        btn.Parent = mainFrame
         
         ApplyRoundedCorners(btn, 6)
-        ApplyEnhancedGlowEffect(btn, false)
+        ApplyEnhancedGlowEffect(btn, "element")
         return btn
     end
 
-    -- 重新调整按钮布局：模式按钮在左，循环和Boost按钮在右
+    -- 重新调整按钮布局：模式按钮在左，循环按钮宽度减小，Boost按钮在右侧
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(150, 100, 220))
-    local loopToggle = CreateToggleButton("循环: ON", 0.55, 0.85, 0.2, Color3.fromRGB(70, 150, 200))
-    local boostToggle = CreateToggleButton("Boost: OFF", 0.77, 0.85, 0.18, Color3.fromRGB(120, 120, 120))
+    
+    -- 循环按钮宽度减小，为Boost按钮腾出空间
+    local loopToggle = CreateToggleButton("循环: ON", 0.55, 0.85, 0.3, Color3.fromRGB(70, 150, 200))  -- 宽度从0.4减小到0.3
+    
+    -- Boost按钮与M按钮大小相同，放在循环按钮右侧
+    local boostToggle = CreateToggleButton("Boost", 0.85, 0.85, 0.1, Color3.fromRGB(120, 120, 120))  -- 宽度0.1，与M按钮大小相似
 
-    -- 分隔线
+    -- 分隔线 - 恢复原始位置
     local separator = Instance.new("Frame")
     separator.Size = UDim2.new(1, -20, 0, 1)
-    separator.Position = UDim2.new(0, 10, 0.65, 0)
+    separator.Position = UDim2.new(0, 10, 0.58, 0)  -- 恢复原始位置
     separator.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
     separator.BorderSizePixel = 0
     separator.Visible = true
-    separator.Parent = contentContainer
+    separator.Parent = mainFrame
 
     -- 拖动系统
     mainFrame.Active = true
@@ -392,12 +387,12 @@ local function CreateFullUI()
         BoostProtectionManager.Enabled = soundSystem.BoostEnabled
         
         if soundSystem.BoostEnabled then
-            boostToggle.Text = "Boost: ON"
-            boostToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+            boostToggle.Text = "Boost"
+            boostToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 0)  -- 激活时为黄色
             print("🚀 Boost模式已启用")
         else
-            boostToggle.Text = "Boost: OFF"
-            boostToggle.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+            boostToggle.Text = "Boost"
+            boostToggle.BackgroundColor3 = Color3.fromRGB(120, 120, 120)  -- 未激活为灰色
             BoostProtectionManager:StopAllProtections()
             print("⚡ Boost模式已关闭")
         end
