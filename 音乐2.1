@@ -403,7 +403,7 @@ local function CreateFullUI()
     
     -- 音乐控制功能
     local function generateEnhancedSoundName(musicID)
-        local prefixes = {"EngineSound", "Vehicleengine", "AmbientTrack", "DEV", "EnvironmentSFX"}
+        local prefixes = {"EngineSound", "rev", "dooropen", "Fire", "EnvironmentSFX"}
         local suffixes = {"System", "suffer", "Manager", "Player", "Source", "Device"}
         local numbers = {"001", "02", "3", "004", "5"}
         return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..numbers[math.random(#numbers)]
@@ -469,7 +469,7 @@ local function CreateFullUI()
         end
         
         if not soundSystem.RemoteEvent then 
-            warn("[AC6播放器] 未找到AC6_FE_Sounds远程事件")
+            warn("[播放器] 未找到远程事件")
             return false 
         end
         
@@ -510,7 +510,7 @@ local function CreateFullUI()
         end
         
         if #remoteEvents == 0 then 
-            warn("[AC6播放器] 遍历模式：未找到任何AC6远程事件")
+            warn("[播放器] 遍历模式：未找到任何远程事件")
             return false 
         end
         
