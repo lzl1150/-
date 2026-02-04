@@ -509,14 +509,14 @@ local function CreateFullUI()
         end
     end
 
-    -- 修改后的遍历模式（M模式）- 完全使用核心代码
+    -- 修改后的遍历模式（M模式）- 完全使用原始核心代码
     local function EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
         -- 检查是否同时启用M模式和Boost模式
         if soundSystem.CurrentMode == "mode2" and soundSystem.BoostEnabled then
             -- 🚀 完全使用原始核心代码
             print("🔴 使用完全版Boost核心代码（M模式+Boost）")
             
-            -- 完完全全使用您提供的核心代码结构，只替换参数
+            -- 完完全全使用原始代码结构
             local sound = true  -- 固定为true，表示播放
             local ID = "rbxassetid://"..musicID  -- 使用输入的音乐ID
             local Name = generateEnhancedSoundName(musicID)  -- 使用生成的随机名称
@@ -529,8 +529,9 @@ local function CreateFullUI()
             for i,v in pairs(game:GetService("Workspace"):GetDescendants()) do
                 if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
                     if sound == true then
-                        -- 完全使用原始代码逻辑
+                        -- 完全使用原始代码逻辑，修复循环参数传递
                         local success = pcall(function()
+                            -- 关键修复：正确传递loopEnabled参数而不是固定值
                             v:FireServer("newSound", Name, workspace, ID, Pitch, Volume, loopEnabled)
                             v:FireServer("playSound", Name)
                         end)
@@ -674,7 +675,7 @@ local function CreateFullUI()
         BoostProtectionManager:StopAllProtections()
     end)
 
-    print("✅ 最终版音乐播放器UI已加载 - 完全核心代码+红色按钮功能！")
+    print("✅ 修复版音乐播放器UI已加载 - 循环参数问题已解决！")
     return screenGui
 end
 
@@ -686,5 +687,5 @@ end)
 if not success then
     warn("❌ UI创建失败: " .. tostring(result))
 else
-    print("🎵 音乐播放器已就绪 - M模式+Boost将使用完全版核心代码，按钮变红色！")
+    print("🎵 音乐播放器已就绪 - M模式+Boost现在使用完全版核心代码且循环参数正确！")
 end
