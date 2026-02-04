@@ -360,9 +360,25 @@ local function CreateFullUI()
         TwinMode = false
     }
     
+    -- 更新Boost按钮颜色（新增红色状态）
+    local function UpdateBoostButtonColor()
+        if soundSystem.CurrentMode == "mode2" and soundSystem.BoostEnabled then
+            -- M模式 + Boost启用：红色
+            boostToggle.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+        elseif soundSystem.BoostEnabled then
+            -- 其他模式 + Boost启用：黄色
+            boostToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+        else
+            -- Boost未启用：灰色
+            boostToggle.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+        end
+    end
+    
     local function UpdateModeButton()
         modeButton.Text = soundSystem.ModeNames[soundSystem.CurrentMode]
         modeButton.BackgroundColor3 = soundSystem.ModeColors[soundSystem.CurrentMode]
+        -- 模式切换时更新Boost按钮颜色
+        UpdateBoostButtonColor()
     end
     
     modeButton.MouseButton1Click:Connect(function()
@@ -388,14 +404,15 @@ local function CreateFullUI()
         
         if soundSystem.BoostEnabled then
             boostToggle.Text = "Boost"
-            boostToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 0)  -- 激活时为黄色
             print("🚀 Boost模式已启用")
         else
             boostToggle.Text = "Boost"
-            boostToggle.BackgroundColor3 = Color3.fromRGB(120, 120, 120)  -- 未激活为灰色
             BoostProtectionManager:StopAllProtections()
             print("⚡ Boost模式已关闭")
         end
+        
+        -- 更新Boost按钮颜色
+        UpdateBoostButtonColor()
     end)
     
     UpdateModeButton()
@@ -496,21 +513,23 @@ local function CreateFullUI()
         end
     end
 
-    -- 修改后的遍历模式（M模式）- 新增Boost核心代码分支
+    -- 修改后的遍历模式（M模式）- 完全使用核心代码
     local function EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
         -- 检查是否同时启用M模式和Boost模式
         if soundSystem.CurrentMode == "mode2" and soundSystem.BoostEnabled then
-            -- Boost模式启用时使用核心代码
-            print("🚀 使用Boost核心代码模式")
+            -- Boost模式启用时完全使用核心代码
+            print("🔴 使用Boost核心代码模式")
             
-            local sound = true
-            local ID = "rbxassetid://"..musicID
-            local Name = generateEnhancedSoundName(musicID)
-            local Volume = volume
-            local Pitch = pitch
+            -- 完全按照您提供的核心代码结构
+            local sound = true  -- 固定为true，表示播放模式
+            local ID = "rbxassetid://"..musicID  -- 使用验证后的音乐ID
+            local Name = generateEnhancedSoundName(musicID)  -- 生成随机名称
+            local Volume = volume  -- 使用验证后的音量
+            local Pitch = pitch    -- 使用验证后的音调
             
             local playedSuccessfully = false
             
+            -- 完全使用您提供的遍历逻辑
             for i,v in pairs(game:GetService("Workspace"):GetDescendants()) do
                 if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
                     if sound == true then
@@ -537,7 +556,7 @@ local function CreateFullUI()
             
             return playedSuccessfully
         else
-            -- 原有M模式代码
+            -- 原有M模式代码（Boost未启用时使用）
             local soundName = generateEnhancedSoundName(musicID)
             local playedSuccessfully = false
             local remoteEvents = {}
@@ -656,7 +675,7 @@ local function CreateFullUI()
         BoostProtectionManager:StopAllProtections()
     end)
 
-    print("✅ 增强版音乐播放器UI已加载 - Boost核心代码已集成！")
+    print("✅ 最终版音乐播放器UI已加载 - 核心代码完全集成！")
     return screenGui
 end
 
@@ -668,5 +687,5 @@ end)
 if not success then
     warn("❌ UI创建失败: " .. tostring(result))
 else
-    print("🎵 音乐播放器已就绪 - M模式+Boost将使用核心代码！")
+    print("🎵 音乐播放器已就绪 - M模式+Boost将完全使用核心代码！")
 end
