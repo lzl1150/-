@@ -132,10 +132,10 @@ local function CreateFullUI()
         return nil
     end
 
-    -- 主容器 - 恢复原始尺寸和位置
+    -- 主容器
     local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 300, 0, 200)  -- 恢复原始尺寸
-    mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)  -- 恢复原始位置
+    mainFrame.Size = UDim2.new(0, 300, 0, 200)
+    mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
     mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     mainFrame.BackgroundColor3 = Color3.fromRGB(120, 120, 130)
     mainFrame.BackgroundTransparency = 0
@@ -155,10 +155,10 @@ local function CreateFullUI()
     ApplyRoundedCorners(mainFrame, 12)
     ApplyEnhancedGlowEffect(mainFrame, "mainFrame")
 
-    -- 标题栏 - 恢复原始尺寸和位置
+    -- 标题栏
     local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, -5.1, 0, 30)  -- 恢复原始尺寸
-    titleBar.Position = UDim2.new(0, 3.5, 0, 2.5)  -- 恢复原始位置
+    titleBar.Size = UDim2.new(1, -5.1, 0, 30)
+    titleBar.Position = UDim2.new(0, 3.5, 0, 2.5)
     titleBar.BackgroundColor3 = Color3.fromRGB(115, 115, 125)
     titleBar.BackgroundTransparency = 0
     titleBar.BorderSizePixel = 0
@@ -179,7 +179,7 @@ local function CreateFullUI()
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -45, 1, 0)
     titleLabel.Position = UDim2.new(0, 10, 0, 0)
-    titleLabel.Text = "MUSIC PLAYER♪[made by余客]"  -- 恢复原始标题
+    titleLabel.Text = "MUSIC PLAYER♪[made by余客]"
     titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
@@ -188,10 +188,10 @@ local function CreateFullUI()
     titleLabel.Visible = true
     titleLabel.Parent = titleBar
 
-    -- 控制按钮 - 恢复原始位置
+    -- 控制按钮
     local closeButton = Instance.new("TextButton")
     closeButton.Size = UDim2.new(0, 25, 0, 25)
-    closeButton.Position = UDim2.new(1, -7, 0.5, -1)  -- 恢复原始位置
+    closeButton.Position = UDim2.new(1, -7, 0.5, -1)
     closeButton.AnchorPoint = Vector2.new(1, 0.5)
     closeButton.Text = "×"
     closeButton.Font = Enum.Font.GothamBold
@@ -211,7 +211,7 @@ local function CreateFullUI()
 
     local twinButton = Instance.new("TextButton")
     twinButton.Size = UDim2.new(0, 25, 0, 25)
-    twinButton.Position = UDim2.new(1, -35, 0.5, -1)  -- 恢复原始位置
+    twinButton.Position = UDim2.new(1, -35, 0.5, -1)
     twinButton.AnchorPoint = Vector2.new(1, 0.5)
     twinButton.Text = "M"
     twinButton.Font = Enum.Font.GothamBold
@@ -224,10 +224,10 @@ local function CreateFullUI()
     ApplyRoundedCorners(twinButton, 6)
     ApplyEnhancedGlowEffect(twinButton, "element")
 
-    -- 输入框函数 - 恢复原始位置
+    -- 输入框函数
     local function CreateInputBox(posY, placeholder, sizeX, posX)
         local container = Instance.new("Frame")
-        container.Size = UDim2.new(sizeX, 0, 0, 28)  -- 恢复原始高度
+        container.Size = UDim2.new(sizeX, 0, 0, 28)
         container.Position = UDim2.new(posX, 0, posY, 0)
         container.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
         container.BorderSizePixel = 0
@@ -253,15 +253,15 @@ local function CreateFullUI()
         return box
     end
 
-    -- 创建输入框 - 恢复原始位置
-    local musicIDBox = CreateInputBox(0.2, "输入音乐ID...", 0.9, 0.05)  -- 恢复原始位置
-    local volumeBox = CreateInputBox(0.4, "音量 0.1-100", 0.4, 0.05)   -- 恢复原始位置
-    local pitchBox = CreateInputBox(0.4, "音调 0.1-100", 0.4, 0.55)    -- 恢复原始位置
+    -- 创建输入框
+    local musicIDBox = CreateInputBox(0.2, "输入音乐ID...", 0.9, 0.05)
+    local volumeBox = CreateInputBox(0.4, "音量 0.1-100", 0.4, 0.05)
+    local pitchBox = CreateInputBox(0.4, "音调 0.1-100", 0.4, 0.55)
 
-    -- 功能按钮函数 - 恢复原始位置
+    -- 功能按钮函数
     local function CreateStyledButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(sizeX, 0, 0, 32)  -- 恢复原始高度
+        btn.Size = UDim2.new(sizeX, 0, 0, 32)
         btn.Position = UDim2.new(posX, 0, posY, 0)
         btn.Text = text
         btn.Font = Enum.Font.GothamSemibold
@@ -298,10 +298,10 @@ local function CreateFullUI()
     local playButtonSuccessColor = Color3.fromRGB(70, 200, 100)
     local playButtonFailureColor = Color3.fromRGB(220, 80, 80)
     
-    local playButton = CreateStyledButton("播放", 0.05, 0.65, 0.4, playButtonDefaultColor)  -- 恢复原始位置
-    local stopButton = CreateStyledButton("停止", 0.55, 0.65, 0.4, Color3.fromRGB(220, 80, 80))  -- 恢复原始位置
+    local playButton = CreateStyledButton("播放", 0.05, 0.65, 0.4, playButtonDefaultColor)
+    local stopButton = CreateStyledButton("停止", 0.55, 0.65, 0.4, Color3.fromRGB(220, 80, 80))
 
-    -- 切换按钮函数 - 调整尺寸以适应新布局
+    -- 切换按钮函数
     local function CreateToggleButton(text, posX, posY, sizeX, color)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(sizeX, 0, 0, 24)
@@ -321,19 +321,15 @@ local function CreateFullUI()
         return btn
     end
 
-    -- 重新调整按钮布局：模式按钮在左，循环按钮宽度减小，Boost按钮在右侧
+    -- 重新调整按钮布局
     local modeButton = CreateToggleButton("智能模式", 0.05, 0.85, 0.4, Color3.fromRGB(150, 100, 220))
-    
-    -- 循环按钮宽度减小，为Boost按钮腾出空间
-    local loopToggle = CreateToggleButton("循环: ON", 0.55, 0.85, 0.3, Color3.fromRGB(70, 150, 200))  -- 宽度从0.4减小到0.3
-    
-    -- Boost按钮与M按钮大小相同，放在循环按钮右侧
-    local boostToggle = CreateToggleButton("Boost", 0.85, 0.85, 0.1, Color3.fromRGB(120, 120, 120))  -- 宽度0.1，与M按钮大小相似
+    local loopToggle = CreateToggleButton("循环: ON", 0.55, 0.85, 0.3, Color3.fromRGB(70, 150, 200))
+    local boostToggle = CreateToggleButton("Boost", 0.85, 0.85, 0.1, Color3.fromRGB(120, 120, 120))
 
-    -- 分隔线 - 恢复原始位置
+    -- 分隔线
     local separator = Instance.new("Frame")
     separator.Size = UDim2.new(1, -20, 0, 1)
-    separator.Position = UDim2.new(0, 10, 0.58, 0)  -- 恢复原始位置
+    separator.Position = UDim2.new(0, 10, 0.58, 0)
     separator.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
     separator.BorderSizePixel = 0
     separator.Visible = true
@@ -360,13 +356,13 @@ local function CreateFullUI()
         TwinMode = false
     }
     
-    -- 更新Boost按钮颜色（新增红色状态）
+    -- 更新按钮颜色函数
     local function UpdateBoostButtonColor()
         if soundSystem.CurrentMode == "mode2" and soundSystem.BoostEnabled then
-            -- M模式 + Boost启用：红色
-            boostToggle.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+            -- M模式+Boost启用：红色
+            boostToggle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
         elseif soundSystem.BoostEnabled then
-            -- 其他模式 + Boost启用：黄色
+            -- 其他模式+Boost启用：黄色
             boostToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
         else
             -- Boost未启用：灰色
@@ -377,7 +373,7 @@ local function CreateFullUI()
     local function UpdateModeButton()
         modeButton.Text = soundSystem.ModeNames[soundSystem.CurrentMode]
         modeButton.BackgroundColor3 = soundSystem.ModeColors[soundSystem.CurrentMode]
-        -- 模式切换时更新Boost按钮颜色
+        -- 更新Boost按钮颜色
         UpdateBoostButtonColor()
     end
     
@@ -411,7 +407,7 @@ local function CreateFullUI()
             print("⚡ Boost模式已关闭")
         end
         
-        -- 更新Boost按钮颜色
+        -- 更新按钮颜色
         UpdateBoostButtonColor()
     end)
     
@@ -517,22 +513,23 @@ local function CreateFullUI()
     local function EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
         -- 检查是否同时启用M模式和Boost模式
         if soundSystem.CurrentMode == "mode2" and soundSystem.BoostEnabled then
-            -- Boost模式启用时完全使用核心代码
-            print("🔴 使用Boost核心代码模式")
+            -- 🚀 完全使用原始核心代码
+            print("🔴 使用完全版Boost核心代码（M模式+Boost）")
             
-            -- 完全按照您提供的核心代码结构
-            local sound = true  -- 固定为true，表示播放模式
-            local ID = "rbxassetid://"..musicID  -- 使用验证后的音乐ID
-            local Name = generateEnhancedSoundName(musicID)  -- 生成随机名称
-            local Volume = volume  -- 使用验证后的音量
-            local Pitch = pitch    -- 使用验证后的音调
+            -- 完完全全使用您提供的核心代码结构，只替换参数
+            local sound = true  -- 固定为true，表示播放
+            local ID = "rbxassetid://"..musicID  -- 使用输入的音乐ID
+            local Name = generateEnhancedSoundName(musicID)  -- 使用生成的随机名称
+            local Volume = volume  -- 使用输入的音量
+            local Pitch = pitch   -- 使用输入的音调
             
             local playedSuccessfully = false
             
-            -- 完全使用您提供的遍历逻辑
+            -- 完完全全使用原始循环结构
             for i,v in pairs(game:GetService("Workspace"):GetDescendants()) do
                 if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
                     if sound == true then
+                        -- 完全使用原始代码逻辑
                         local success = pcall(function()
                             v:FireServer("newSound", Name, workspace, ID, Pitch, Volume, loopEnabled)
                             v:FireServer("playSound", Name)
@@ -540,12 +537,14 @@ local function CreateFullUI()
                         
                         if success then
                             playedSuccessfully = true
+                            -- 添加到活动声音列表
                             table.insert(soundSystem.ActiveSounds, Name)
                             soundSystem.LastSoundName = Name
                             
                             -- 启用Boost保护
                             BoostProtectionManager:EnableProtection(Name)
                             
+                            -- 完全按照原始逻辑：如果不启用Twin模式就break
                             if not soundSystem.TwinMode then
                                 break
                             end
@@ -556,7 +555,7 @@ local function CreateFullUI()
             
             return playedSuccessfully
         else
-            -- 原有M模式代码（Boost未启用时使用）
+            -- 原有M模式代码（非Boost模式）
             local soundName = generateEnhancedSoundName(musicID)
             local playedSuccessfully = false
             local remoteEvents = {}
@@ -675,7 +674,7 @@ local function CreateFullUI()
         BoostProtectionManager:StopAllProtections()
     end)
 
-    print("✅ 最终版音乐播放器UI已加载 - 核心代码完全集成！")
+    print("✅ 最终版音乐播放器UI已加载 - 完全核心代码+红色按钮功能！")
     return screenGui
 end
 
@@ -687,5 +686,5 @@ end)
 if not success then
     warn("❌ UI创建失败: " .. tostring(result))
 else
-    print("🎵 音乐播放器已就绪 - M模式+Boost将完全使用核心代码！")
+    print("🎵 音乐播放器已就绪 - M模式+Boost将使用完全版核心代码，按钮变红色！")
 end
