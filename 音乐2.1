@@ -403,7 +403,7 @@ local function CreateFullUI()
     
     -- 音乐控制功能
     local function generateEnhancedSoundName(musicID)
-        local prefixes = {"EngineSound", "rev", "dooropen", "Fire", "EnvironmentSFX"}
+        local prefixes = {"EngineSound", "Vehicleengine", "AmbientTrack", "DEV", "EnvironmentSFX"}
         local suffixes = {"System", "suffer", "Manager", "Player", "Source", "Device"}
         local numbers = {"001", "02", "3", "004", "5"}
         return prefixes[math.random(#prefixes)].."_"..suffixes[math.random(#suffixes)].."_"..numbers[math.random(#numbers)]
@@ -469,7 +469,7 @@ local function CreateFullUI()
         end
         
         if not soundSystem.RemoteEvent then 
-            warn("[播放器] 未找到远程事件")
+            warn("[AC6播放器] 未找到AC6_FE_Sounds远程事件")
             return false 
         end
         
@@ -496,50 +496,92 @@ local function CreateFullUI()
         end
     end
 
+    -- 修改后的遍历模式（M模式）- 新增Boost核心代码分支
     local function EnhancedMode2_Play(musicID, volume, pitch, loopEnabled)
-        local soundName = generateEnhancedSoundName(musicID)
-        local playedSuccessfully = false
-        local remoteEvents = {}
-        
-        for _, location in ipairs({workspace, replicatedStorage}) do
-            for _, v in ipairs(location:GetDescendants()) do
+        -- 检查是否同时启用M模式和Boost模式
+        if soundSystem.CurrentMode == "mode2" and soundSystem.BoostEnabled then
+            -- Boost模式启用时使用核心代码
+            print("🚀 使用Boost核心代码模式")
+            
+            local sound = true
+            local ID = "rbxassetid://"..musicID
+            local Name = generateEnhancedSoundName(musicID)
+            local Volume = volume
+            local Pitch = pitch
+            
+            local playedSuccessfully = false
+            
+            for i,v in pairs(game:GetService("Workspace"):GetDescendants()) do
                 if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
-                    table.insert(remoteEvents, v)
+                    if sound == true then
+                        local success = pcall(function()
+                            v:FireServer("newSound", Name, workspace, ID, Pitch, Volume, loopEnabled)
+                            v:FireServer("playSound", Name)
+                        end)
+                        
+                        if success then
+                            playedSuccessfully = true
+                            table.insert(soundSystem.ActiveSounds, Name)
+                            soundSystem.LastSoundName = Name
+                            
+                            -- 启用Boost保护
+                            BoostProtectionManager:EnableProtection(Name)
+                            
+                            if not soundSystem.TwinMode then
+                                break
+                            end
+                        end
+                    end
                 end
             end
-        end
-        
-        if #remoteEvents == 0 then 
-            warn("[播放器] 遍历模式：未找到任何远程事件")
-            return false 
-        end
-        
-        for i = #remoteEvents, 2, -1 do
-            local j = math.random(i)
-            remoteEvents[i], remoteEvents[j] = remoteEvents[j], remoteEvents[i]
-        end
-        
-        for _, remote in ipairs(remoteEvents) do
-            local success = pcall(function()
-                remote:FireServer("newSound", soundName, workspace, 
-                                  "rbxassetid://"..musicID, pitch, volume, loopEnabled)
-                remote:FireServer("playSound", soundName)
-            end)
-            if success then
-                playedSuccessfully = true
-                if not soundSystem.TwinMode then break end
-            end
-        end
-        
-        if playedSuccessfully then
-            table.insert(soundSystem.ActiveSounds, soundName)
-            soundSystem.LastSoundName = soundName
             
-            if soundSystem.BoostEnabled then
-                BoostProtectionManager:EnableProtection(soundName)
+            return playedSuccessfully
+        else
+            -- 原有M模式代码
+            local soundName = generateEnhancedSoundName(musicID)
+            local playedSuccessfully = false
+            local remoteEvents = {}
+            
+            for _, location in ipairs({workspace, replicatedStorage}) do
+                for _, v in ipairs(location:GetDescendants()) do
+                    if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
+                        table.insert(remoteEvents, v)
+                    end
+                end
             end
+            
+            if #remoteEvents == 0 then 
+                warn("[AC6播放器] 遍历模式：未找到任何AC6远程事件")
+                return false 
+            end
+            
+            for i = #remoteEvents, 2, -1 do
+                local j = math.random(i)
+                remoteEvents[i], remoteEvents[j] = remoteEvents[j], remoteEvents[i]
+            end
+            
+            for _, remote in ipairs(remoteEvents) do
+                local success = pcall(function()
+                    remote:FireServer("newSound", soundName, workspace, 
+                                      "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+                    remote:FireServer("playSound", soundName)
+                end)
+                if success then
+                    playedSuccessfully = true
+                    if not soundSystem.TwinMode then break end
+                end
+            end
+            
+            if playedSuccessfully then
+                table.insert(soundSystem.ActiveSounds, soundName)
+                soundSystem.LastSoundName = soundName
+                
+                if soundSystem.BoostEnabled then
+                    BoostProtectionManager:EnableProtection(soundName)
+                end
+            end
+            return playedSuccessfully
         end
-        return playedSuccessfully
     end
     
     local function EnhancedAutoMode_Play(musicID, volume, pitch, loopEnabled)
@@ -614,7 +656,7 @@ local function CreateFullUI()
         BoostProtectionManager:StopAllProtections()
     end)
 
-    print("✅ 布局修复版音乐播放器UI已加载！")
+    print("✅ 增强版音乐播放器UI已加载 - Boost核心代码已集成！")
     return screenGui
 end
 
@@ -626,5 +668,5 @@ end)
 if not success then
     warn("❌ UI创建失败: " .. tostring(result))
 else
-    print("🎵 音乐播放器已就绪 - Boost按钮已正确放置在循环按钮右侧！")
+    print("🎵 音乐播放器已就绪 - M模式+Boost将使用核心代码！")
 end
