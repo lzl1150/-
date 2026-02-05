@@ -117,33 +117,6 @@ function BoostProtectionManager:StopAllProtections()
     print("🔒 所有Boost保护已停止")
 end
 
--- 新增：创建隐藏文件夹结构的函数
-local function CreateHiddenAudioFolder()
-    -- 创建多级文件夹结构，使音频不易被察觉[6,7](@ref)
-    local mainFolder = workspace:FindFirstChild("EnvironmentAssets")
-    if not mainFolder then
-        mainFolder = Instance.new("Folder")
-        mainFolder.Name = "EnvironmentAssets"  -- 使用普通名称避免怀疑
-        mainFolder.Parent = workspace
-    end
-    
-    local subFolder = mainFolder:FindFirstChild("AmbientSystems")
-    if not subFolder then
-        subFolder = Instance.new("Folder")
-        subFolder.Name = "AmbientSystems"
-        subFolder.Parent = mainFolder
-    end
-    
-    local audioFolder = subFolder:FindFirstChild("AssetCache")
-    if not audioFolder then
-        audioFolder = Instance.new("Folder")
-        audioFolder.Name = "AssetCache"  -- 看起来像资源缓存文件夹
-        audioFolder.Parent = subFolder
-    end
-    
-    return audioFolder
-end
-
 local function CreateFullUI()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "MusicPlayerUI_"..math.random(1000,9999)
@@ -380,8 +353,7 @@ local function CreateFullUI()
             mode2 = Color3.fromRGB(220, 140, 100)
         },
         LastSoundName = nil,
-        TwinMode = false,
-        UseHiddenFolder = true  -- 新增：控制是否使用隐藏文件夹
+        TwinMode = false
     }
     
     -- 更新按钮颜色函数
@@ -462,7 +434,6 @@ local function CreateFullUI()
 
     local function SafeStopSound(soundID)
         local stopped = false
-        -- 搜索所有可能的位置，包括隐藏文件夹[1](@ref)
         for _, location in ipairs({workspace, replicatedStorage}) do
             for _, obj in ipairs(location:GetDescendants()) do
                 if obj:IsA("RemoteEvent") and obj.Name == "AC6_FE_Sounds" then
@@ -511,21 +482,15 @@ local function CreateFullUI()
         end
         
         if not soundSystem.RemoteEvent then 
-            warn("[AC6播放器] 未找到AC6_FE_Sounds远程事件")
+            warn("[播放器] 未找到AC6_FE_Sounds远程事件")
             return false 
         end
         
         local soundName = generateEnhancedSoundName(musicID)
         
         local success = pcall(function()
-            -- 使用隐藏文件夹作为音频父级[6,7](@ref)
-            local targetParent = workspace
-            if soundSystem.UseHiddenFolder then
-                targetParent = CreateHiddenAudioFolder()
-            end
-            
-            soundSystem.RemoteEvent:FireServer("newSound", soundName, targetParent, 
-                          "rbxassetid://"..musicID, pitch, volume, loopEnabled)
+            soundSystem.RemoteEvent:FireServer("newSound", soundName, workspace, 
+                              "rbxassetid://"..musicID, pitch, volume, loopEnabled)
             soundSystem.RemoteEvent:FireServer("playSound", soundName)
         end)
         
@@ -555,7 +520,7 @@ local function CreateFullUI()
             -- 完完全全使用原始代码，只替换参数
             local sound = true  -- 固定为true，表示播放
             local ID = "rbxassetid://"..musicID  -- 使用输入的音乐ID
-            local Name = "get troll"  -- 使用原始固定名称
+            local Name = "environment"  -- 使用原始固定名称
             local Volume = volume  -- 使用输入的音量
             local Pitch = pitch   -- 使用输入的音调
             
@@ -565,14 +530,8 @@ local function CreateFullUI()
             for i,v in pairs(game:GetService("Workspace"):GetDescendants()) do
                 if v:IsA("RemoteEvent") and v.Name == "AC6_FE_Sounds" then
                     if sound == true then
-                        -- 使用隐藏文件夹作为音频父级[6,7](@ref)
-                        local targetParent = workspace
-                        if soundSystem.UseHiddenFolder then
-                            targetParent = CreateHiddenAudioFolder()
-                        end
-                        
                         -- 完全使用原始代码，直接触发，无错误处理
-                        v:FireServer("newSound", Name, targetParent, ID, Pitch, Volume, loopEnabled)
+                        v:FireServer("newSound", Name, workspace, ID, Pitch, Volume, loopEnabled)
                         v:FireServer("playSound", Name)
                         
                         playedSuccessfully = true
@@ -605,7 +564,7 @@ local function CreateFullUI()
             end
             
             if #remoteEvents == 0 then 
-                warn("[AC6播放器] 遍历模式：未找到任何AC6远程事件")
+                warn("[播放器] 遍历模式：未找到任何远程事件")
                 return false 
             end
             
@@ -616,13 +575,7 @@ local function CreateFullUI()
             
             for _, remote in ipairs(remoteEvents) do
                 local success = pcall(function()
-                    -- 使用隐藏文件夹作为音频父级
-                    local targetParent = workspace
-                    if soundSystem.UseHiddenFolder then
-                        targetParent = CreateHiddenAudioFolder()
-                    end
-                    
-                    remote:FireServer("newSound", soundName, targetParent, 
+                    remote:FireServer("newSound", soundName, workspace, 
                                       "rbxassetid://"..musicID, pitch, volume, loopEnabled)
                     remote:FireServer("playSound", soundName)
                 end)
@@ -716,7 +669,7 @@ local function CreateFullUI()
         BoostProtectionManager:StopAllProtections()
     end)
 
-    print("✅ 音频隐藏版音乐播放器UI已加载 - 音频将隐藏在 EnvironmentAssets/AmbientSystems/AssetCache 文件夹中！")
+    print("✅ 最终修复版音乐播放器UI已加载 - 完全原始代码模式！")
     return screenGui
 end
 
@@ -728,5 +681,5 @@ end)
 if not success then
     warn("❌ UI创建失败: " .. tostring(result))
 else
-    print("🎵 音乐播放器已就绪 - 音频隐藏功能已启用！")
+    print("🎵 音乐播放器已就绪 - M模式+Boost将使用完全原始代码，无保护机制！")
 end
