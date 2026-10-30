@@ -1378,8 +1378,6 @@ end
 
 SelectTab(TabNames[Config.MENU_Tab])
 RefreshAllUI()
-
-Connections
 Connections.toggleUI = UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
     if input.KeyCode == Enum.KeyCode.Insert then
